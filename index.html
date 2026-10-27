@@ -3,108 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escáner Secuencial Profesional</title>
+    <title>Lector QR Secuencial de Seguridad</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 15px;
-            text-align: center;
-            background-color: #f8f9fa;
-            color: #212529;
+            background-color: #111827; /* Fondo oscuro */
+            color: #f3f4f6;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .subtitulo {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        h1::after {
+            content: "🛡️"; /* Icono de escudo de seguridad */
+            font-size: 1.4rem;
+        }
+        .info-secuencia {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        #texto-esperado {
+            background-color: #1d4ed8;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-left: 5px;
+            display: inline-block;
+        }
+        .controles {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        #btn-iniciar {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid #4b5563;
+            padding: 10px 24px;
+            font-size: 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        #btn-iniciar::before {
+            content: "📷";
+        }
+        #btn-iniciar:hover {
+            background-color: #1f2937;
+            border-color: #9ca3af;
+        }
+        #selector-camara {
+            background-color: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        /* 📸 CONTENEDOR DE LA CÁMARA ESTILO ESCÁNER MÓVIL */
+        .visor-camara-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 340px;
+            aspect-ratio: 1 / 1;
+            margin-bottom: 10px;
         }
         #camara-contenedor {
             width: 100%;
-            max-width: 360px;
-            aspect-ratio: 1 / 1;
-            margin: 15px auto;
-            border: 3px solid #0d6efd;
-            border-radius: 12px;
+            height: 100%;
+            border-radius: 16px;
             overflow: hidden;
-            background: #000;
+            background: #090d16;
             position: relative;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
         }
         video {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .info-secuencia {
-            font-size: 1.2rem;
-            margin: 10px 0;
-            background: #e7f1ff;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #b6d4fe;
+        
+        /* Esquinas de enfoque del escáner */
+        .esquina-enfoque {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 4px solid #38bdf8;
+            z-index: 10;
+            pointer-events: none;
         }
-        #texto-esperado {
-            color: #0d6efd;
-            font-weight: bold;
-            display: block;
-            font-size: 1.5rem;
-            margin-top: 5px;
-            word-break: break-all;
+        .top-left { top: 20px; left: 20px; border-right: none; border-bottom: none; border-top-left-radius: 8px; }
+        .top-right { top: 20px; right: 20px; border-left: none; border-bottom: none; border-top-right-radius: 8px; }
+        .bottom-left { bottom: 20px; left: 20px; border-right: none; border-top: none; border-bottom-left-radius: 8px; }
+        .bottom-right { bottom: 20px; right: 20px; border-left: none; border-top: none; border-bottom-right-radius: 8px; }
+        
+        /* Línea láser de escaneo animada */
+        .linea-laser {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+            box-shadow: 0 0 10px #38bdf8;
+            z-index: 9;
+            animation: escanearMovimiento 2s linear infinite;
+            pointer-events: none;
         }
-        .controles {
-            margin: 15px 0;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+        @keyframes escanearMovimiento {
+            0% { top: 20px; }
+            50% { top: calc(100% - 23px); }
+            100% { top: 20px; }
         }
-        button {
-            background-color: #0d6efd;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            flex: 1;
-            max-width: 200px;
+
+        .texto-ayuda {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 25px;
         }
-        button.btn-peligro { background-color: #dc3545; max-width: 100%; }
-        select {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            flex: 1;
-            max-width: 150px;
+
+        h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            align-self: flex-start;
+            max-width: 400px;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
         }
+
+        /* 📊 TABLA ESTILO OSCURO PROFESIONAL */
         .tabla-responsiva {
             width: 100%;
+            max-width: 400px;
             overflow-x: auto;
-            margin-top: 20px;
+            margin-bottom: 30px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background: #fff;
-            border-radius: 8px;
+            background-color: #1f2937;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            font-size: 0.95rem;
         }
         th, td {
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
+            padding: 12px 10px;
             text-align: center;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #374151;
         }
-        th { background-color: #212529; color: white; }
-        td { word-break: break-all; }
-        .valido { color: #198754; font-weight: bold; }
-        .invalido { color: #dc3545; font-weight: bold; }
-        .completado { color: #6c757d; font-style: italic; }
+        th {
+            background-color: #111827;
+            color: #9ca3af;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .icono-qr {
+            font-size: 1.1rem;
+        }
+        .valido { color: #ffffff; }
+        .invalido { color: #ef4444; }
+        
+        /* Estados visuales check / alerta */
+        .estado-check::after { content: "✔️"; color: #10b981; font-weight: bold; }
+        .estado-alerta::after { content: "⚠️"; color: #f59e0b; }
+
+        .btn-texto-reiniciar {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 15px;
+            text-decoration: none;
+        }
+        .btn-texto-reiniciar:hover {
+            color: #ffffff;
+        }
+
+        .btn-peligro-rojo {
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-peligro-rojo::before {
+            content: "⚠️";
+        }
+        .btn-peligro-rojo:hover {
+            background-color: #b91c1c;
+        }
+        .completado {
+            background-color: #10b981 !important;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Escáner Secuencial</h1>
+    <p class="subtitulo">Escáner QR en Tiempo Real</p>
+    <h1>Lector QR Secuencial de Seguridad</h1>
     
     <div class="info-secuencia">
-        Siguiente QR esperado:
-        <span id="texto-esperado">CARGANDO...</span>
+        Siguiente esperado: <span id="texto-esperado">CARGANDO...</span>
     </div>
 
     <div class="controles">
@@ -112,9 +265,19 @@
         <select id="selector-camara" style="display:none;"></select>
     </div>
 
-    <div id="camara-contenedor">
-        <video id="video-feed" autoplay playsinline muted></video>
+    <!-- Visor con estilo de mira de escaneo -->
+    <div class="visor-camara-wrapper">
+        <div class="esquina-enfoque top-left"></div>
+        <div class="esquina-enfoque top-right"></div>
+        <div class="esquina-enfoque bottom-left"></div>
+        <div class="esquina-enfoque bottom-right"></div>
+        <div class="linea-laser"></div>
+        
+        <div id="camara-contenedor">
+            <video id="video-feed" autoplay playsinline muted></video>
+        </div>
     </div>
+    <p class="txt-ayuda">Zonas de Escaneo Óptimas</p>
 
     <h2>Historial de Registros</h2>
     <div class="tabla-responsiva">
@@ -122,23 +285,29 @@
             <thead>
                 <tr>
                     <th>Hora</th>
-                    <th>Contenido QR</th>
+                    <th>QR ID</th>
                     <th>Resultado</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
-            <tbody id="tabla-historial"></tbody>
+            <tbody id="tabla-historial">
+                <!-- Los registros se inyectarán aquí -->
+            </tbody>
         </table>
     </div>
 
-    <button id="btn-reiniciar" class="btn-peligro">Reiniciar Secuencia</button>
+    <button id="btn-texto-limpiar" class="btn-texto-reiniciar">Reiniciar Todo</button>
+    <button id="btn-reiniciar" class="btn-peligro-rojo">Reiniciar Sesión y Registros</button>
 
     <script>
-        // Lista secuencial alfanumérica de prueba (puedes cambiar los textos)
+        // ==========================================
+        // 📝 TU LISTA SECUENCIAL ALFANUMÉRICA
+        // ==========================================
         const secuenciaEsperada = [
+            "1",
+            "2",
             "QR-ZONA-A",
-            "PRODUCTO-504",
-            "MESA-CHECK-02",
-            "FIN-RUTA"
+            "PRODUCTO-504"
         ];
 
         let indiceActual = 0;
@@ -151,129 +320,7 @@
         const txtEsperado = document.getElementById('texto-esperado');
         const tablaHistorial = document.getElementById('tabla-historial');
         const btnReiniciar = document.getElementById('btn-reiniciar');
+        const btnTextoLimpiar = document.getElementById('btn-texto-limpiar');
 
         actualizarInterfazEsperada();
 
-        if (!('BarcodeDetector' in window)) {
-            alert('Tu navegador móvil no soporta lectura nativa. Abre con HTTPS en Chrome o Safari actualizado.');
-        }
-
-        const detectorCodigos = new BarcodeDetector({ formats: ['qr_code'] });
-
-        function actualizarInterfazEsperada() {
-            if (indiceActual < secuenciaEsperada.length) {
-                txtEsperado.innerText = secuenciaEsperada[indiceActual];
-                txtEsperado.className = "";
-            } else {
-                txtEsperado.innerText = "¡Secuencia Completada! 🎉";
-                txtEsperado.className = "completado";
-            }
-        }
-
-        async function obtenerCamaras() {
-            try {
-                const dispositivos = await navigator.mediaDevices.enumerateDevices();
-                listaDispositivos = dispositivos.filter(d => d.kind === 'videoinput');
-                
-                selectorCamara.innerHTML = '';
-                listaDispositivos.forEach((dispositivo, index) => {
-                    const opcion = document.createElement('option');
-                    opcion.value = dispositivo.deviceId;
-                    opcion.text = dispositivo.label || `Cámara ${index + 1}`;
-                    if (dispositivo.label.toLowerCase().includes('back') || dispositivo.label.toLowerCase().includes('trasera')) {
-                        opcion.selected = true;
-                    }
-                    selectorCamara.appendChild(opcion);
-                });
-
-                if (listaDispositivos.length > 1) {
-                    selectorCamara.style.display = 'inline-block';
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function arrancarCamara(deviceId = null) {
-            if (flujoActual) {
-                flujoActual.getTracks().forEach(track => track.stop());
-            }
-
-            const opcionesControles = deviceId 
-                ? { video: { deviceId: { exact: deviceId } } }
-                : { video: { facingMode: 'environment' } };
-
-            try {
-                flujoActual = await navigator.mediaDevices.getUserMedia(opcionesControles);
-                video.srcObject = flujoActual;
-                btnIniciar.style.display = 'none';
-                await obtenerCamaras();
-                escanearFotograma();
-            } catch (err) {
-                alert("Error de acceso a la cámara. Revisa los permisos e intenta bajo HTTPS.");
-            }
-        }
-
-        async function escanearFotograma() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                try {
-                    const codigos = await detectorCodigos.detect(video);
-                    if (codigos.length > 0) {
-                        // Solución al problema de lectura: obtenemos el rawValue del primer objeto detectado
-                        procesarQR(codigos[0].rawValue); 
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-            requestAnimationFrame(escanearFotograma);
-        }
-
-        let ultimoCodigoLeido = null;
-        let tiempoUltimoEscaneo = 0;
-
-        function procesarQR(textoQR) {
-            const ahoraTiempo = Date.now();
-            if (textoQR === ultimoCodigoLeido && (ahoraTiempo - tiempoUltimoEscaneo) < 2500) return;
-
-            ultimoCodigoLeido = textoQR;
-            tiempoUltimoEscaneo = ahoraTiempo;
-
-            const ahora = new Date();
-            const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            let resultadoTexto = "";
-            let claseResultado = "";
-
-            if (indiceActual >= secuenciaEsperada.length) return;
-
-            if (textoQR.trim() === secuenciaEsperada[indiceActual].trim()) {
-                resultadoTexto = "Válido";
-                claseResultado = "valido";
-                indiceActual++;
-                actualizarInterfazEsperada();
-            } else {
-                resultadoTexto = "Incorrecto (Fuera de secuencia)";
-                claseResultado = "invalido";
-            }
-
-            const nuevaFila = document.createElement('tr');
-            nuevaFila.innerHTML = `
-                <td>${horaFormateada}</td>
-                <td><strong>${textoQR}</strong></td>
-                <td class="${claseResultado}">${resultadoTexto}</td>
-            `;
-            tablaHistorial.insertBefore(nuevaFila, tablaHistorial.firstChild);
-        }
-
-        btnIniciar.addEventListener('click', () => arrancarCamara(selectorCamara.value));
-        selectorCamara.addEventListener('change', () => arrancarCamara(selectorCamara.value));
-        
-        btnReiniciar.addEventListener('click', () => {
-            indiceActual = 0;
-            actualizarInterfazEsperada();
-            tablaHistorial.innerHTML = '';
-            ultimoCodigoLeido = null;
-        });
-    </script>
-</body>
-</html>
