@@ -2,67 +2,117 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Escaneo Secuencial con Login QR</title>
-    <!-- Librería para decodificar códigos QR desde cámara y archivos -->
+    <!-- Evita que el celular haga un zoom molesto y descuadre la pantalla al escribir en los inputs -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>App Escáner Secuencial</title>
+    <!-- Librería oficial para decodificar códigos QR -->
     <script src="https://unpkg.com" type="text/javascript"></script>
     <style>
-        /* Estilos generales y layouts */
+        /* Diseño adaptado 100% a pantallas de celulares */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            -webkit-user-select: none; /* Mejor respuesta táctil */
         }
 
         .hidden {
             display: none !important;
         }
 
-        /* Estilos de la Pantalla de Login */
-        #login-container {
+        /* Tarjetas de Login y Registro optimizadas para el pulgar */
+        .auth-container {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 400px;
+            padding: 25px 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            max-width: 100%;
             width: 100%;
             text-align: center;
-            margin-top: 50px;
+            margin-top: 20px;
+            box-sizing: border-box;
         }
 
-        #reader-login {
+        .auth-container h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.6em;
+            color: #111;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.95em;
+            color: #495057;
+        }
+
+        /* Inputs grandes y fáciles de presionar en móviles */
+        .form-group input {
             width: 100%;
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: #000;
-            margin: 20px 0;
+            padding: 14px;
+            border: 1px solid #ced4da;
+            border-radius: 10px;
+            font-size: 1em;
+            box-sizing: border-box;
+            background-color: #fdfdfd;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus {
+            border-color: #007bff;
+            outline: none;
+            background-color: #fff;
         }
 
-        /* Estilos del Panel Secuencial Principal */
+        .auth-switch {
+            margin-top: 20px;
+            font-size: 0.95em;
+            color: #6c757d;
+        }
+
+        .auth-switch a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* Contenedor del Panel Secuencial */
         #panel-secuencial {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 600px;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             width: 100%;
+            box-sizing: border-box;
         }
 
         .panel-header {
             text-align: center;
-            border-bottom: 2px solid #eee;
+            border-bottom: 2px solid #f1f3f5;
             padding-bottom: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
+        .panel-header h1 {
+            margin: 0 0 5px 0;
+            font-size: 1.5em;
+        }
+
+        /* Contenedor de la cámara adaptado a pantallas verticales de teléfonos */
         #reader-panel {
             width: 100%;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
             background-color: #000;
             margin: 15px 0;
@@ -70,16 +120,16 @@
 
         .status-box {
             background: #e9ecef;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             text-align: center;
             font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 20px;
+            font-size: 1em;
+            margin-bottom: 15px;
         }
 
         .loading-text {
-            color: #ff9800;
+            color: #fd7e14;
             animation: blink 1.5s infinite;
         }
 
@@ -89,193 +139,166 @@
             100% { opacity: 0.4; }
         }
 
-        /* Tabla de Historial */
+        /* Historial adaptable a pantallas angostas */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            min-width: 300px;
         }
 
         th, td {
-            border: 1px solid #dee2e6;
-            padding: 12px;
+            padding: 12px 10px;
             text-align: left;
+            font-size: 0.9em;
+            border-bottom: 1px solid #dee2e6;
         }
 
         th {
             background-color: #f8f9fa;
+            font-weight: 600;
         }
 
-        /* Botones */
+        /* Botones móviles (Grandes y con altura cómoda para el dedo) */
         .btn {
-            display: inline-block;
+            display: block;
             width: 100%;
-            padding: 12px;
-            margin: 8px 0;
+            padding: 14px;
+            margin: 10px 0;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             font-size: 1em;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
             box-sizing: border-box;
+            text-align: center;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .btn-primary { background-color: #007bff; color: white; }
-        .btn-primary:hover { background-color: #0056b3; }
         .btn-success { background-color: #28a745; color: white; }
-        .btn-success:hover { background-color: #218838; }
         .btn-danger { background-color: #dc3545; color: white; }
-        .btn-danger:hover { background-color: #c82333; }
         .btn-secondary { background-color: #6c757d; color: white; }
-        .btn-secondary:hover { background-color: #5a6268; }
 
-        #login-status {
-            color: #dc3545;
+        .status-message {
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 12px;
+            font-size: 0.95em;
         }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
     </style>
 </head>
 <body>
 
-    <!-- ========================================== -->
-    <!-- VISTA 1: PANTALLA DE INICIO DE SESIÓN QR   -->
-    <!-- ========================================== -->
-    <div id="login-container">
-        <h2>🔒 Inicio de Sesión</h2>
-        <p>Apunta tu QR a la cámara o súbelo desde tu galería para ingresar.</p>
+    <!-- PANTALLA 1: INICIO DE SESIÓN -->
+    <div id="login-container" class="auth-container">
+        <h2>🔒 Iniciar Sesión</h2>
+        <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Ingresa tus credenciales para escanear.</p>
         
-        <!-- Escáner de cámara para el Login -->
-        <div id="reader-login"></div>
+        <div class="form-group">
+            <label for="login-username">Usuario</label>
+            <!-- autocapitalize="none" evita que el celular ponga la primera letra en mayúscula automáticamente -->
+            <input type="text" id="login-username" placeholder="Tu usuario" autocapitalize="none" autocomplete="username">
+        </div>
         
-        <p style="color: #666; margin: 15px 0;">— O también —</p>
-        
-        <!-- Input oculto y botón estilizado para subir imagen de la galería -->
-        <label for="qr-input-file" class="btn btn-primary">📁 Seleccionar QR de la Galería</label>
-        <input type="file" id="qr-input-file" accept="image/*" class="hidden">
-        
-        <!-- Mensaje en caso de error de autenticación -->
-        <p id="login-status"></p>
-    </div>
-
-
-    <!-- ========================================== -->
-    <!-- VISTA 2: TU PANEL DE ESCANEO SECUENCIAL   -->
-    <!-- ========================================== -->
-    <div id="panel-secuencial" class="hidden">
-        
-        <div class="panel-header">
-            <h1>Escáner Secuencial</h1>
-            <p>Sesión activa • <a href="#" onclick="cerrarSesion()" style="color: #dc3545; text-decoration: none; font-weight: bold;">Cerrar Sesión</a></p>
+        <div class="form-group">
+            <label for="login-password">Contraseña</label>
+            <input type="password" id="login-password" placeholder="••••••••">
         </div>
 
-        <!-- Estado actual del escáner del panel -->
+        <button class="btn btn-primary" onclick="procesarLogin()">Ingresar</button>
+        <div id="login-msg" class="status-message error"></div>
+
+        <div class="auth-switch">
+            ¿No tienes cuenta? <a href="#" onclick="mostrarPantalla('registro')">Regístrate aquí</a>
+        </div>
+    </div>
+
+    <!-- PANTALLA 2: REGISTRO -->
+    <div id="registro-container" class="auth-container hidden">
+        <h2>📝 Registro</h2>
+        <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Crea una cuenta local en este dispositivo.</p>
+        
+        <div class="form-group">
+            <label for="reg-nombre">Nombre</label>
+            <input type="text" id="reg-nombre" placeholder="Tu nombre">
+        </div>
+
+        <div class="form-group">
+            <label for="reg-apellido">Apellido</label>
+            <input type="text" id="reg-apellido" placeholder="Tu apellido">
+        </div>
+
+        <div class="form-group">
+            <label for="reg-username">Nombre de Usuario</label>
+            <input type="text" id="reg-username" placeholder="Ej: gerardo12" autocapitalize="none">
+        </div>
+        
+        <div class="form-group">
+            <label for="reg-password">Contraseña</label>
+            <input type="password" id="reg-password" placeholder="Mínimo 4 caracteres">
+        </div>
+
+        <button class="btn btn-success" onclick="procesarRegistro()">Crear Cuenta</button>
+        <div id="reg-msg" class="status-message"></div>
+
+        <div class="auth-switch">
+            ¿Ya tienes cuenta? <a href="#" onclick="mostrarPantalla('login')">Inicia sesión</a>
+        </div>
+    </div>
+
+    <!-- PANTALLA 3: PANEL DE ESCANEO SECUENCIAL -->
+    <div id="panel-secuencial" class="hidden">
+        <div class="panel-header">
+            <h1>Escáner Secuencial</h1>
+            <p style="margin:0; font-size:0.9em; color:#495057;">Operador: <span id="nombre-operador" style="font-weight: bold; color: #007bff;">Usuario</span> • <a href="#" onclick="cerrarSesion()" style="color: #dc3545; text-decoration: none; font-weight: bold;">Salir</a></p>
+        </div>
+
         <div class="status-box">
             Estado: <span id="panel-state-text" class="loading-text">QR en Espera / CARGANDO...</span>
         </div>
 
-        <!-- Botón para encender la cámara del panel secuencial -->
         <button class="btn btn-success" id="btn-toggle-cam" onclick="encenderCamaraPanel()">Encender Cámara</button>
 
-        <!-- Contenedor para el visor de la cámara en el panel -->
         <div id="reader-panel"></div>
 
-        <!-- Tabla del Historial de Registros -->
         <h2>Historial de Registros</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Hora</th>
-                    <th>Contenido QR</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="historial-tbody">
-                <!-- Aquí se irán insertando tus filas secuenciales por JavaScript -->
-                <tr>
-                    <td colspan="3" style="text-align: center; color: #888;">No hay registros secuenciales aún</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Contenido QR</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="historial-tbody">
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #888;">No hay registros aún</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-        <!-- Botón para reiniciar la secuencia actual -->
-        <button class="btn btn-secondary" style="margin-top: 20px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
+        <button class="btn btn-secondary" style="margin-top: 15px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
     </div>
 
-    <!-- ========================================== -->
-    <!-- LÓGICA JAVASCRIPT DE AMBAS PANTALLAS       -->
-    <!-- ========================================== -->
     <script>
-        // 1. Configuración de credenciales de acceso simuladas
-        const ACCESO_PERMITIDO = "USUARIO_AUTORIZADO_2026"; 
-
-        // Instancias independientes de la librería para evitar conflictos de cámara
-        let loginScanner = null;
         let panelScanner = null;
 
-        // Al cargar la página, iniciamos automáticamente el escáner del Login
-        window.addEventListener('DOMContentLoaded', () => {
-            inicializarLoginCamara();
-            configurarAccesoGaleria();
-        });
-
-        // --- SECCIÓN: INICIO DE SESIÓN ---
-
-        function inicializarLoginCamara() {
-            loginScanner = new Html5Qrcode("reader-login");
-            const config = { fps: 10, qrbox: { width: 230, height: 230 } };
-
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length > 0) {
-                    // Selecciona la cámara trasera si detecta más de una
-                    const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
-                    loginScanner.start(cameraId, config, procesarLoginExitoso, (err) => {
-                        // Silenciar logs repetitivos de no-detección en el feed
-                    }).catch(err => {
-                        console.log("No se pudo iniciar la cámara automáticamente:", err);
-                    });
-                }
-            }).catch(err => {
-                console.error("Error obteniendo dispositivos de video:", err);
-            });
-        }
-
-        function configurarAccesoGaleria() {
-            const fileInput = document.getElementById('qr-input-file');
-            fileInput.addEventListener('change', e => {
-                if (e.target.files.length === 0) return;
-
-                const imageFile = e.target.files[0];
-                
-                // Si la cámara del login está activa, creamos una instancia rápida para decodificar el archivo
-                const detectorArchivo = new Html5Qrcode("reader-login");
-                detectorArchivo.scanFile(imageFile, true)
-                    .then(decodedText => {
-                        procesarLoginExitoso(decodedText);
-                    })
-                    .catch(err => {
-                        document.getElementById("login-status").innerText = "❌ No se encontró un código QR válido en la imagen.";
-                        console.error(err);
-                    });
-            });
-        }
-
-        function procesarLoginExitoso(contenidoQr) {
-            // Validamos que el contenido corresponda al acceso
-            if (contenidoQr.trim() === ACCESO_PERMITIDO) {
-                
-                // Apagamos la cámara de la pantalla de login de inmediato si está corriendo
-                if (loginScanner && loginScanner.isScanning) {
-                    loginScanner.stop().then(() => darAccesoAlPanel());
-                } else {
-                    darAccesoAlPanel();
-                }
-            } else {
-                document.getElementById("login-status").innerText = "❌ Acceso denegado. Código QR no registrado.";
-            }
-        }
-
-        function darAccesoAlPanel() {
-            // Transición visual quitando y poniendo clases CSS
+        function mostrarPantalla(pantalla) {
             document.getElementById("login-container").classList.add("hidden");
+            document.getElementById("registro-container").classList.add("hidden");
+            document.getElementById("panel-secuencial").classList.add("hidden");
+            
+            document.getElementById("login-msg").innerText = "";
+            document.getElementById("reg-msg").innerText = "";
+
