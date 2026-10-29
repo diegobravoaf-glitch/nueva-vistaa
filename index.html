@@ -2,13 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Evita que el celular haga un zoom molesto y descuadre la pantalla al escribir en los inputs -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>App Escáner Secuencial</title>
     <!-- Librería oficial para decodificar códigos QR -->
     <script src="https://unpkg.com" type="text/javascript"></script>
     <style>
-        /* Diseño adaptado 100% a pantallas de celulares y PC */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f8f9fa;
@@ -24,7 +22,6 @@
             display: none !important;
         }
 
-        /* Tarjetas de Login y Registro optimizadas para el pulgar */
         .auth-container {
             background: white;
             padding: 25px 20px;
@@ -37,7 +34,6 @@
             box-sizing: border-box;
         }
 
-        /* Ajuste para que en PC no se vea gigante a lo ancho */
         @media (min-width: 600px) {
             .auth-container, #panel-secuencial {
                 max-width: 500px !important;
@@ -63,7 +59,6 @@
             color: #495057;
         }
 
-        /* Inputs grandes y fáciles de presionar en móviles */
         .form-group input {
             width: 100%;
             padding: 14px;
@@ -72,13 +67,6 @@
             font-size: 1em;
             box-sizing: border-box;
             background-color: #fdfdfd;
-            transition: border-color 0.2s;
-        }
-        
-        .form-group input:focus {
-            border-color: #007bff;
-            outline: none;
-            background-color: #fff;
         }
 
         .auth-switch {
@@ -89,7 +77,6 @@
             color: #6c757d;
         }
 
-        /* Contenedor del Panel Secuencial */
         #panel-secuencial {
             background: white;
             padding: 20px;
@@ -111,7 +98,6 @@
             font-size: 1.5em;
         }
 
-        /* Contenedor de la cámara adaptado a pantallas verticales de teléfonos */
         #reader-panel {
             width: 100%;
             border-radius: 12px;
@@ -141,7 +127,6 @@
             100% { opacity: 0.4; }
         }
 
-        /* Historial adaptable a pantallas angostas */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -168,29 +153,28 @@
             font-weight: 600;
         }
 
-        /* Botones móviles (Grandes y con altura cómoda para el dedo) */
-        .btn {
+        /* Transformación de botones a elementos div táctiles inalterables */
+        .btn-tactil {
             display: block;
             width: 100%;
             padding: 14px;
             margin: 10px 0;
-            border: none;
             border-radius: 10px;
             font-size: 1em;
             font-weight: bold;
             cursor: pointer;
             box-sizing: border-box;
             text-align: center;
+            user-select: none;
             -webkit-tap-highlight-color: transparent; 
         }
 
-        .btn-primary { background-color: #007bff; color: white; }
-        .btn-success { background-color: #28a745; color: white; }
-        .btn-danger { background-color: #dc3545; color: white; }
-        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-blue { background-color: #007bff; color: white; }
+        .btn-green { background-color: #28a745; color: white; }
+        .btn-red { background-color: #dc3545; color: white; }
+        .btn-gray { background-color: #6c757d; color: white; }
         
-        /* Botón de texto alternativo para cambios de pantalla */
-        .btn-outline {
+        .btn-border {
             background-color: transparent;
             color: #007bff;
             border: 2px solid #007bff;
@@ -214,21 +198,21 @@
         <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Ingresa tus credenciales para escanear.</p>
         
         <div class="form-group">
-            <label for="login-username">Usuario</label>
-            <input type="text" id="login-username" placeholder="Tu usuario" autocapitalize="none" autocomplete="username">
+            <label>Usuario</label>
+            <input type="text" id="login-username" placeholder="Tu usuario" autocapitalize="none">
         </div>
         
         <div class="form-group">
-            <label for="login-password">Contraseña</label>
+            <label>Contraseña</label>
             <input type="password" id="login-password" placeholder="••••••••">
         </div>
 
-        <button class="btn btn-primary" onclick="procesarLogin()">Ingresar</button>
+        <div class="btn-tactil btn-blue" onclick="procesarLogin()">Ingresar</div>
         <div id="login-msg" class="status-message error"></div>
 
         <div class="auth-switch">
             <span>¿No tienes cuenta?</span>
-            <button class="btn btn-outline" onclick="mostrarPantalla('registro-container')">Crear una cuenta nueva</button>
+            <div class="btn-tactil btn-border" onclick="mostrarPantalla('registro-container')">Crear una cuenta nueva</div>
         </div>
     </div>
 
@@ -238,31 +222,31 @@
         <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Crea una cuenta local en este dispositivo.</p>
         
         <div class="form-group">
-            <label for="reg-nombre">Nombre</label>
+            <label>Nombre</label>
             <input type="text" id="reg-nombre" placeholder="Tu nombre">
         </div>
 
         <div class="form-group">
-            <label for="reg-apellido">Apellido</label>
+            <label>Apellido</label>
             <input type="text" id="reg-apellido" placeholder="Tu apellido">
         </div>
 
         <div class="form-group">
-            <label for="reg-username">Nombre de Usuario</label>
+            <label>Nombre de Usuario</label>
             <input type="text" id="reg-username" placeholder="Ej: gerardo12" autocapitalize="none">
         </div>
         
         <div class="form-group">
-            <label for="reg-password">Contraseña</label>
+            <label>Contraseña</label>
             <input type="password" id="reg-password" placeholder="Mínimo 4 caracteres">
         </div>
 
-        <button class="btn btn-success" onclick="procesarRegistro()">Registrarme</button>
+        <div class="btn-tactil btn-green" onclick="procesarRegistro()">Registrarme</div>
         <div id="reg-msg" class="status-message"></div>
 
         <div class="auth-switch">
             <span>¿Ya tienes cuenta?</span>
-            <button class="btn btn-outline" onclick="mostrarPantalla('login-container')">Volver al Inicio de Sesión</button>
+            <div class="btn-tactil btn-border" onclick="mostrarPantalla('login-container')">Volver al Inicio de Sesión</div>
         </div>
     </div>
 
@@ -277,7 +261,7 @@
             Estado: <span id="panel-state-text" class="loading-text">QR en Espera / CARGANDO...</span>
         </div>
 
-        <button class="btn btn-success" id="btn-toggle-cam" onclick="encenderCamaraPanel()">Encender Cámara</button>
+        <div class="btn-tactil btn-green" id="btn-toggle-cam" onclick="encenderCamaraPanel()">Encender Cámara</div>
 
         <div id="reader-panel"></div>
 
@@ -299,9 +283,28 @@
             </table>
         </div>
 
-        <button class="btn btn-secondary" style="margin-top: 15px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
-    </div> <!-- Etiqueta div de cierre corregida aquí -->
+        <div class="btn-tactil btn-gray" style="margin-top: 15px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</div>
+    </div>
 
     <script>
         let panelScanner = null;
 
+        function mostrarPantalla(idPantallaTarget) {
+            document.getElementById("login-container").classList.add("hidden");
+            document.getElementById("registro-container").classList.add("hidden");
+            document.getElementById("panel-secuencial").classList.add("hidden");
+            
+            document.getElementById("login-msg").innerText = "";
+            document.getElementById("reg-msg").innerText = "";
+
+            document.getElementById(idPantallaTarget).classList.remove("hidden");
+        }
+
+        function procesarRegistro() {
+            const nombre = document.getElementById("reg-nombre").value.trim();
+            const apellido = document.getElementById("reg-apellido").value.trim();
+            const usuario = document.getElementById("reg-username").value.trim().toLowerCase();
+            const clave = document.getElementById("reg-password").value;
+            const msgBox = document.getElementById("reg-msg");
+
+            if (!nombre || !apellido || !usuario || !clave) {
