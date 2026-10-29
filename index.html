@@ -87,8 +87,10 @@
 
         .panel-header h1 { margin: 0 0 5px 0; font-size: 1.6em; }
 
+        /* Contenedor del visor de la cámara (OBLIGATORIO) */
         #reader-panel {
             width: 100%;
+            min-height: 250px;
             border-radius: 10px;
             overflow: hidden;
             background-color: #000;
@@ -167,6 +169,7 @@
 
         <button type="button" id="btn-toggle-cam" class="btn-cam-on" onclick="encenderCamaraPanel()">Encender Cámara</button>
 
+        <!-- ¡AQUÍ ESTÁ EL VISOR ELIMINADO DEVUELTO! -->
         <div id="reader-panel"></div>
 
         <h2 style="text-align: left; font-size: 1.2em; margin-top: 20px;">Historial de Registros</h2>
@@ -249,11 +252,8 @@
     </script>
 
     <!-- LIBRERÍA Y LÓGICA DE DETECCIÓN INTELIGENTE DE CÁMARA TRASERA -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://unpkg.com" type="text/javascript"></script>
     <script>
         function encenderCamaraPanel() {
             const btn = document.getElementById("btn-toggle-cam");
             
-            if (panelScanner && panelScanner.isScanning) {
-                panelScanner.stop().then(() => {
-                    btn.innerText = "Encender Cámara";
