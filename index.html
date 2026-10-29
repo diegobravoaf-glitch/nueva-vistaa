@@ -65,8 +65,8 @@
         }
 
         .btn-ingresar:hover { background-color: #0056b3; }
-        .btn-cam-on { background-color: #28a745; border: none; color: white; padding: 12px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; }
-        .btn-cam-off { background-color: #dc3545; border: none; color: white; padding: 12px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .btn-cam-on { background-color: #28a745; border: none; color: white; padding: 14px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1em; }
+        .btn-cam-off { background-color: #dc3545; border: none; color: white; padding: 14px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1em; }
         .btn-clear { background-color: #6c757d; border: none; color: white; padding: 12px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; }
 
         .hidden { display: none !important; }
@@ -138,12 +138,12 @@
         
         <div class="form-group">
             <label>Usuario</label>
-            <input type="text" id="user" placeholder="diego">
+            <input type="text" id="user" placeholder="diego" autocomplete="off" autocapitalize="off" autocorrect="off">
         </div>
         
         <div class="form-group">
             <label>Contraseña</label>
-            <input type="password" id="pass" placeholder="12345">
+            <input type="password" id="pass" placeholder="12345" autocomplete="off" autocapitalize="off" autocorrect="off">
         </div>
         
         <button type="button" class="btn-ingresar" onclick="validarAccesoApp()">Entrar al Escáner</button>
@@ -190,7 +190,7 @@
         <button type="button" class="btn-clear" style="margin-top: 15px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
     </div>
 
-    <!-- SCRIPT DE NAVEGACIÓN PRIMERO (Aislado y protegido de bloqueos) -->
+    <!-- SCRIPT DE NAVEGACIÓN -->
     <script>
         let panelScanner = null;
 
@@ -248,14 +248,12 @@
         }
     </script>
 
-    <!-- LIBRERÍA Y LÓGICA DEL ESCÁNER AL FINAL (Si el navegador la bloquea localmente, el login no se romperá) -->
-    <script src="https://unpkg.com" type="text/javascript"></script>
+    <!-- LIBRERÍA Y LÓGICA DE DETECCIÓN INTELIGENTE DE CÁMARA TRASERA -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
         function encenderCamaraPanel() {
             const btn = document.getElementById("btn-toggle-cam");
             
-            if (typeof Html5Qrcode === "undefined") {
-                alert("La librería del escáner no ha cargado localmente. Esta función se activará al subir el archivo a GitHub Pages (HTTPS).");
-                return;
-            }
-
+            if (panelScanner && panelScanner.isScanning) {
+                panelScanner.stop().then(() => {
+                    btn.innerText = "Encender Cámara";
