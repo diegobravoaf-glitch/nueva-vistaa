@@ -3,264 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>App Escáner de Rondas</title>
-    <!-- Librería oficial unificada para decodificar códigos QR -->
-    <script src="https://unpkg.com" type="text/javascript"></script>
+    <title>Lector QR Secuencial Móvil</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
             padding: 15px;
-            box-sizing: border-box;
+            text-align: center;
+            background-color: #f8f9fa;
+            color: #212529;
         }
-
-        .container {
-            background: white;
-            padding: 30px;
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Estilos de tu formulario de Login integrado */
+        .login-card {
+            background: #fff;
+            padding: 30px 20px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 100%;
-            max-width: 450px;
+            margin-top: 50px;
             box-sizing: border-box;
         }
-
+        .login-card h2 {
+            margin-top: 0;
+            color: #212529;
+        }
         .form-group {
-            margin-bottom: 18px;
             text-align: left;
+            margin-bottom: 15px;
         }
-
-        label {
+        .form-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             font-weight: bold;
-            color: #495057;
+            font-size: 0.9em;
         }
-
-        input[type="text"], input[type="password"] {
+        .form-group input {
             width: 100%;
             padding: 12px;
-            border: 1px solid #ced4da;
+            border: 1px solid #ccc;
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 1em;
         }
-
-        .btn-ingresar {
-            width: 100%;
-            padding: 14px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 10px 0;
-            box-sizing: border-box;
-            display: block;
-        }
-
-        .btn-ingresar:hover { background-color: #0056b3; }
-        .btn-clear { background-color: #6c757d; border: none; color: white; padding: 12px; width: 100%; font-weight: bold; border-radius: 8px; cursor: pointer; }
-
-        .hidden { display: none !important; }
-
         #mensaje-error {
             color: #dc3545;
             font-weight: bold;
-            margin-top: 12px;
-            min-height: 20px;
+            margin-top: 10px;
+            font-size: 0.9em;
         }
 
-        .panel-header {
-            text-align: center;
-            border-bottom: 2px solid #f1f3f5;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
-        }
-
-        .panel-header h1 { margin: 0 0 5px 0; font-size: 1.6em; }
-
-        /* Contenedor del Lector dentro de la misma aplicación */
-        #reader {
+        /* Tus estilos originales del escáner */
+        #camara-contenedor {
             width: 100%;
-            margin: 15px 0;
-            border-radius: 10px;
+            max-width: 400px;
+            aspect-ratio: 1 / 1;
+            margin: 15px auto;
+            border: 3px solid #0d6efd;
+            border-radius: 12px;
             overflow: hidden;
-            border: none !important;
+            background: #000;
+            position: relative;
         }
-
-        /* Estilos internos para limpiar los botones nativos de la librería */
-        #reader button {
-            padding: 10px 15px;
-            background-color: #28a745;
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .info-secuencia {
+            font-size: 1.3rem;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        #numero-esperado {
+            color: #0d6efd;
+            font-size: 1.8rem;
+        }
+        .controles {
+            margin: 15px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        button {
+            background-color: #0d6efd;
             color: white;
             border: none;
-            border-radius: 6px;
-            font-weight: bold;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
             cursor: pointer;
-            margin: 5px;
+            font-weight: bold;
         }
-        #reader button:hover { background-color: #218838; }
-
-        .table-responsive {
+        button.btn-peligro { background-color: #dc3545; }
+        select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        table {
             width: 100%;
-            overflow-x: auto;
-            margin-top: 15px;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-
-        table { width: 100%; border-collapse: collapse; min-width: 300px; }
-        th, td { padding: 12px 10px; text-align: left; font-size: 0.9em; border-bottom: 1px solid #dee2e6; }
-        th { background-color: #f8f9fa; font-weight: 600; }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            text-align: center;
+        }
+        th { background-color: #212529; color: white; }
+        .valido { color: #198754; font-weight: bold; }
+        .invalido { color: #dc3545; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- PANTALLA 1: FORMULARIO DE ACCESO -->
-    <div id="pantalla-login" class="container">
-        <h2>🔒 Acceso al Panel</h2>
-        <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Ingresa las credenciales para iniciar tus rondas.</p>
+    <!-- ========================================== -->
+    <!-- PANTALLA 1: FORMULARIO DE LOGIN            -->
+    <!-- ========================================== -->
+    <div id="pantalla-login" class="login-card">
+        <h2>🔒 Acceso al Sistema</h2>
+        <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Por favor ingresa tus credenciales de ronda.</p>
         
         <div class="form-group">
             <label>Usuario</label>
-            <input type="text" id="user" placeholder="diego" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <input type="text" id="user" placeholder="Escribe tu usuario" autocomplete="off" autocapitalize="off" autocorrect="off">
         </div>
         
         <div class="form-group">
             <label>Contraseña</label>
-            <input type="password" id="pass" placeholder="12345" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <input type="password" id="pass" placeholder="Escribe tu contraseña" autocomplete="off" autocapitalize="off" autocorrect="off">
         </div>
         
-        <button type="button" class="btn-ingresar" onclick="validarAccesoApp()">Entrar al Escáner</button>
+        <button type="button" onclick="validarLoginNativo()">Entrar al Escáner</button>
         
         <div id="mensaje-error"></div>
     </div>
 
-    <!-- PANTALLA 2: APLICATIVO DE ESCANEO DE RONDAS SECUENCIAL -->
-    <div id="panel-secuencial" class="container hidden">
-        <div class="panel-header">
-            <h1>Escáner de Rondas</h1>
-            <p style="margin:0; font-size:0.9em; color:#495057;">
-                Operador: <span id="nombre-operador" style="font-weight: bold; color: #007bff;">DIEGO</span> • 
-                <a href="#" onclick="cerrarSesion(); return false;" style="color: #dc3545; text-decoration: none; font-weight: bold;">Salir</a>
-            </p>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 2: TU ESCÁNER ORIGINAL DE RONDAS  -->
+    <!-- ========================================== -->
+    <div id="aplicativo-escaner" class="hidden">
+        <p>Escáner QR en Tiempo Real</p>
+        <h1 style="margin: 5px 0;">Lector QR Secuencial</h1>
+        
+        <p style="margin: 0; font-size: 0.9em; color: #666;">Operador: DIEGO • <a href="#" onclick="cerrarSesionApp(); return false;" style="color: #dc3545; font-weight: bold; text-decoration: none;">Salir</a></p>
+        
+        <div class="info-secuencia" style="margin-top: 15px;">
+            Siguiente esperado: <span id="numero-esperado">1</span>
         </div>
 
-        <!-- AQUÍ ESTÁ EL LECTOR DENTRO DE LA APLICACIÓN QUE YA TE FUNCIONABA -->
-        <div id="reader"></div>
-
-        <h2 style="text-align: left; font-size: 1.2em; margin-top: 20px;">Historial de Registros</h2>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Hora</th>
-                        <th>Contenido QR</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody id="historial-tbody">
-                    <tr>
-                        <td colspan="3" style="text-align: center; color: #888;">No hay registros de rondas aún</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="controles">
+            <button id="btn-iniciar">Encender Cámara</button>
+            <select id="selector-camara" style="display:none;"></select>
         </div>
 
-        <button type="button" class="btn-clear" style="margin-top: 15px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
+        <div id="camara-contenedor">
+            <video id="video-feed" autoplay playsinline muted></video>
+        </div>
+
+        <h2>Historial de Registros</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>QR</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-historial"></tbody>
+        </table>
+
+        <button id="btn-reiniciar" class="btn-peligro" style="margin-top:20px;">Reiniciar Todo</button>
     </div>
 
+    <!-- ========================================== -->
+    <!-- LÓGICA JAVASCRIPT INTEGRADA                -->
+    <!-- ========================================== -->
     <script>
-        let html5QrcodeScanner = null;
-
-        function validarAccesoApp() {
-            const usuarioIngresado = document.getElementById("user").value.trim().toLowerCase();
-            const claveIngresada = document.getElementById("pass").value.trim();
+        // --- CONTROL DEL LOGIN ---
+        function validarLoginNativo() {
+            const usuario = document.getElementById("user").value.trim().toLowerCase();
+            const clave = document.getElementById("pass").value.trim();
             const errorBox = document.getElementById("mensaje-error");
 
-            if (usuarioIngresado === "diego" && claveIngresada === "12345") {
+            if (usuario === "diego" && clave === "12345") {
+                // Intercambio limpio de vistas
                 document.getElementById("pantalla-login").classList.add("hidden");
-                document.getElementById("panel-secuencial").classList.remove("hidden");
-                document.getElementById("nombre-operador").innerText = usuarioIngresado.toUpperCase();
+                document.getElementById("aplicativo-escaner").classList.remove("hidden");
                 
+                errorBox.innerText = "";
                 document.getElementById("user").value = "";
                 document.getElementById("pass").value = "";
-                errorBox.innerText = "";
-
-                // Inicializamos el lector integrado dentro de la app justo después de entrar
-                inicializarLectorRondas();
+                
+                // Ejecutar automáticamente el reconocimiento de tus cámaras nativas
+                obtenerCamaras();
             } else {
                 errorBox.innerText = "❌ Datos incorrectos de acceso";
             }
         }
 
-        // --- INICIALIZACIÓN DEL LECTOR ORIGINAL DENTRO DE LA APP ---
-        function inicializarLectorRondas() {
-            if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5QrcodeScanner(
-                    "reader", 
-                    { 
-                        fps: 10, 
-                        qrbox: { width: 250, height: 250 },
-                        rememberLastUsedCamera: true
-                    },
-                    /* verbose= */ false
-                );
-                
-                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        function cerrarSesionApp() {
+            if (flujoActual) {
+                flujoActual.getTracks().forEach(track => track.stop());
+                btnIniciar.style.display = 'inline-block';
             }
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            // Registrar en el historial secuencial al detectar el QR con éxito
-            registrarCodigoEnHistorial(decodedText);
-            if (navigator.vibrate) navigator.vibrate(100);
-        }
-
-        function onScanFailure(error) {
-            // Errores continuos de muestreo (se silencian para evitar spam)
-        }
-
-        function registrarCodigoEnHistorial(contenido) {
-            const tbody = document.getElementById("historial-tbody");
-            if(tbody.rows.length === 1 && tbody.rows.cells.length === 1) { tbody.innerHTML = ""; }
-            const ahora = new Date();
-            const horaString = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            const nuevaFila = tbody.insertRow(0);
-            nuevaFila.innerHTML = `<td>${horaString}</td><td><span style="word-break: break-all;">${contenido}</span></td><td style="color: green; font-weight:bold;">✓ Ok</td>`;
-        }
-
-        function reiniciarSecuencia() {
-            if(confirm("¿Deseas limpiar el historial secuencial de rondas?")) {
-                document.getElementById("historial-tbody").innerHTML = `<tr><td colspan="3" style="text-align: center; color: #888;">No hay registros de rondas aún</td></tr>`;
-            }
-        }
-
-        function cerrarSesion() {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().then(() => {
-                    html5QrcodeScanner = null;
-                    restablecerYSalir();
-                }).catch(() => {
-                    restablecerYSalir();
-                });
-            } else {
-                restablecerYSalir();
-            }
-        }
-
-        function restablecerYSalir() {
-            document.getElementById("panel-secuencial").classList.add("hidden");
+            document.getElementById("aplicativo-escaner").classList.add("hidden");
             document.getElementById("pantalla-login").classList.remove("hidden");
         }
-    </script>
-</body>
-</html>
+
+
+        // --- TU LÓGICA SECUENCIAL NATIVA ORIGINAL ---
+        let siguienteEsperado = 1;
+        let listaDispositivos = [];
+        let flujoActual = null;
+
+        const video = document.getElementById('video-feed');
+        const btnIniciar = document.getElementById('btn-iniciar');
+        const selectorCamara = document.getElementById('selector-camara');
+        const txtEsperado = document.getElementById('numero-esperado');
+        const tablaHistorial = document.getElementById('tabla-historial');
+        const btnReiniciar = document.getElementById('btn-reiniciar');
+
+        if (!('BarcodeDetector' in window)) {
+            alert('Tu navegador no soporta lectura nativa de QR. Asegúrate de usar Chrome, Edge o Safari actualizado y bajo una conexión HTTPS.');
+        }
+
+        const detectorCodigos = new BarcodeDetector({ formats: ['qr_code'] });
+
+        async function obtenerCamaras() {
+            try {
+                const dispositivos = await navigator.mediaDevices.enumerateDevices();
+                listaDispositivos = dispositivos.filter(d => d.kind === 'videoinput');
+                
+                selectorCamara.innerHTML = '';
+                listaDispositivos.forEach((dispositivo, index) => {
+                    const opcion = document.createElement('option');
+                    opcion.value = dispositivo.deviceId;
+                    opcion.text = dispositivo.label || `Cámara ${index + 1}`;
+                    if (dispositivo.label.toLowerCase().includes('back') || dispositivo.label.toLowerCase().includes('trasera')) {
+                        opcion.selected = true;
+                    }
+                    selectorCamara.appendChild(opcion);
+                });
+
+                if (listaDispositivos.length > 1) {
+                    selectorCamara.style.display = 'inline-block';
+                }
+            } catch (e) {
+                console.error("Error enumerando cámaras:", e);
+            }
+        }
+
+        async function arrancarCamara(deviceId = null) {
+            if (flujoActual) {
+                flujoActual.getTracks().forEach(track => track.stop());
+            }
+
+            const opcionesControles = deviceId 
+                ? { video: { deviceId: { exact: deviceId } } }
+                : { video: { facingMode: 'environment' } };
+
+            try {
+                flujoActual = await navigator.mediaDevices.getUserMedia(opcionesControles);
+                video.srcObject = flujoActual;
