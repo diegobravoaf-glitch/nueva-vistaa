@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>App Escáner Secuencial</title>
     <!-- Librería oficial para decodificar códigos QR -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://unpkg.com" type="text/javascript"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -145,7 +145,8 @@
             font-weight: 600;
         }
 
-        .btn-input {
+        /* Botón basado en Enlaces para Máxima Compatibilidad Móvil */
+        .btn-link-táctil {
             display: block;
             width: 100%;
             padding: 14px;
@@ -156,43 +157,45 @@
             font-weight: bold;
             cursor: pointer;
             text-align: center;
+            text-decoration: none;
             background-color: #007bff;
-            color: white;
+            color: white !important;
             box-sizing: border-box;
-            -webkit-appearance: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .btn-cam-on { background-color: #28a745; color: white; }
-        .btn-cam-off { background-color: #dc3545; color: white; }
-        .btn-clear { background-color: #6c757d; color: white; }
+        .btn-cam-on { background-color: #28a745; }
+        .btn-cam-off { background-color: #dc3545; }
+        .btn-clear { background-color: #6c757d; }
 
         .status-message {
             font-weight: bold;
             margin-top: 12px;
             font-size: 0.95em;
-            color: #dc3545;
             min-height: 20px;
         }
     </style>
 </head>
 <body>
 
-    <!-- PANTALLA DE INICIO DE SESIÓN DIRECTO -->
+    <!-- PANTALLA DE INICIO DE SESIÓN -->
     <div id="login-container" class="auth-container">
-        <h2>🔒 Acceso al Panel</h2>
-        <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Ingresa tu nombre y la contraseña maestra.</p>
+        <h2>🔒 Acceso Único</h2>
+        <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Ingresa las credenciales obligatorias asignadas.</p>
         
         <div class="form-group">
-            <label>Nombre de Usuario</label>
-            <input type="text" id="login-username" placeholder="Escribe tu nombre" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <label>Usuario</label>
+            <input type="text" id="login-username" placeholder="Escribe el usuario único" autocomplete="off" autocapitalize="off" autocorrect="off">
         </div>
         
         <div class="form-group">
-            <label>Contraseña Autorizada</label>
-            <input type="password" id="login-password" placeholder="Clave maestra" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <label>Contraseña</label>
+            <input type="password" id="login-password" placeholder="Escribe la clave única" autocomplete="off" autocapitalize="off" autocorrect="off">
         </div>
 
-        <input type="button" class="btn-input" value="Ingresar al Escáner" onclick="procesarLogin()">
+        <!-- Botón cambiado a elemento hipervínculo seguro para disparar el script móvil -->
+        <a href="javascript:void(0);" class="btn-link-táctil" onclick="procesarLogin(); return false;">Ingresar al Escáner</a>
         
         <div id="login-msg" class="status-message"></div>
     </div>
@@ -204,7 +207,7 @@
             <h1>Escáner Secuencial</h1>
             <p style="margin:0; font-size:0.9em; color:#495057;">
                 Operador: <span id="nombre-operador" style="font-weight: bold; color: #007bff;">Usuario</span> • 
-                <a href="#" onclick="cerrarSesion()" style="color: #dc3545; text-decoration: none; font-weight: bold;">Salir</a>
+                <a href="javascript:void(0);" onclick="cerrarSesion(); return false;" style="color: #dc3545; text-decoration: none; font-weight: bold;">Salir</a>
             </p>
         </div>
 
@@ -212,7 +215,7 @@
             Estado: <span id="panel-state-text" class="loading-text">QR en Espera / CARGANDO...</span>
         </div>
 
-        <input type="button" id="btn-toggle-cam" class="btn-input btn-cam-on" value="Encender Cámara" onclick="encenderCamaraPanel()">
+        <a href="javascript:void(0);" id="btn-toggle-cam" class="btn-link-táctil btn-cam-on" onclick="encenderCamaraPanel(); return false;">Encender Cámara</a>
 
         <div id="reader-panel"></div>
 
@@ -234,45 +237,43 @@
             </table>
         </div>
 
-        <input type="button" class="btn-input btn-clear" style="margin-top: 15px;" value="Reiniciar Secuencia" onclick="reiniciarSecuencia()">
+        <a href="javascript:void(0);" class="btn-link-táctil btn-clear" style="margin-top: 15px;" onclick="reiniciarSecuencia(); return false;">Reiniciar Secuencia</a>
     </div>
 
     <script>
         let panelScanner = null;
-        const CLAVE_MAESTRA = "Diego12345"; 
+        
+        // Credenciales estrictas requeridas
+        const USUARIO_VALIDO = "diego";
+        const CLAVE_VALIDA = "diego12345"; 
 
         function procesarLogin() {
-            // Obtenemos los valores ingresados eliminando espacios fantasma con .trim()
-            const usuario = document.getElementById("login-username").value.trim();
-            const clave = document.getElementById("login-password").value.trim();
+            const userField = document.getElementById("login-username").value.trim().toLowerCase();
+            const passField = document.getElementById("login-password").value.trim().toLowerCase();
             const msgBox = document.getElementById("login-msg");
 
-            if (!usuario || !clave) {
+            if (!userField || !passField) {
                 msgBox.style.color = "#dc3545";
-                msgBox.innerText = "❌ Por favor completa ambos campos.";
+                msgBox.innerText = "❌ Completa ambos campos.";
                 return;
             }
 
-            // Validación estricta libre de espacios invisibles
-            if (clave === CLAVE_MAESTRA) {
+            if (userField === USUARIO_VALIDO && passField === CLAVE_VALIDA) {
                 msgBox.style.color = "#28a745";
-                msgBox.innerText = "✓ Credenciales correctas. Abriendo panel...";
+                msgBox.innerText = "✓ Acceso correcto. Cargando...";
 
-                document.getElementById("nombre-operador").innerText = usuario;
+                document.getElementById("nombre-operador").innerText = userField.toUpperCase();
                 
-                // Realizamos el cambio de pantalla con un retraso mínimo para asegurar la respuesta
-                setTimeout(() => {
-                    document.getElementById("login-container").classList.add("hidden");
-                    document.getElementById("panel-secuencial").classList.remove("hidden");
-                    
-                    document.getElementById("login-username").value = "";
-                    document.getElementById("login-password").value = "";
-                    msgBox.innerText = "";
-                }, 300);
-
+                // Forzar el cambio eliminando clases y modificando el display de raíz
+                document.getElementById("login-container").style.display = "none";
+                document.getElementById("panel-secuencial").classList.remove("hidden");
+                
+                document.getElementById("login-username").value = "";
+                document.getElementById("login-password").value = "";
+                msgBox.innerText = "";
             } else {
                 msgBox.style.color = "#dc3545";
-                msgBox.innerText = "❌ Contraseña incorrecta. Recuerda usar la D mayúscula.";
+                msgBox.innerText = "❌ Usuario o contraseña incorrectos.";
             }
         }
 
@@ -281,8 +282,8 @@
             
             if (panelScanner && panelScanner.isScanning) {
                 panelScanner.stop().then(() => {
-                    btn.value = "Encender Cámara";
-                    btn.className = "btn-input btn-cam-on";
+                    btn.innerText = "Encender Cámara";
+                    btn.className = "btn-link-táctil btn-cam-on";
                     document.getElementById("panel-state-text").innerText = "Escáner Pausado";
                     document.getElementById("panel-state-text").className = "";
                 });
@@ -299,9 +300,3 @@
                 { facingMode: "environment" }, 
                 config, 
                 (decodedText) => {
-                    registrarCodigoEnHistorial(decodedText);
-                    if (navigator.vibrate) navigator.vibrate(100);
-                }, 
-                (err) => { }
-            ).then(() => {
-                btn.value = "Apagar Cámara";
