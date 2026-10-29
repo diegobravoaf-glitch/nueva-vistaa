@@ -3,247 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lector QR Secuencial Móvil</title>
+    <title>Panel de Escaneo Secuencial con Login QR</title>
+    <!-- Librería para decodificar códigos QR desde cámara y archivos -->
+    <script src="https://unpkg.com" type="text/javascript"></script>
     <style>
+        /* Estilos generales y layouts */
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 15px;
-            text-align: center;
-            background-color: #f8f9fa;
-            color: #212529;
-        }
-        #camara-contenedor {
-            width: 100%;
-            max-width: 400px;
-            aspect-ratio: 1 / 1;
-            margin: 15px auto;
-            border: 3px solid #0d6efd;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #000;
-            position: relative;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .info-secuencia {
-            font-size: 1.3rem;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        #numero-esperado {
-            color: #0d6efd;
-            font-size: 1.8rem;
-        }
-        .controles {
-            margin: 15px 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
             display: flex;
-            gap: 10px;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
-        button {
-            background-color: #0d6efd;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1rem;
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Estilos de la Pantalla de Login */
+        #login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        #reader-login {
+            width: 100%;
             border-radius: 8px;
-            cursor: pointer;
+            overflow: hidden;
+            background-color: #000;
+            margin: 20px 0;
+        }
+
+        /* Estilos del Panel Secuencial Principal */
+        #panel-secuencial {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .panel-header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        #reader-panel {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #000;
+            margin: 15px 0;
+        }
+
+        .status-box {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
             font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 20px;
         }
-        button.btn-peligro { background-color: #dc3545; }
-        select {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+
+        .loading-text {
+            color: #ff9800;
+            animation: blink 1.5s infinite;
         }
+
+        @keyframes blink {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* Tabla de Historial */
         table {
             width: 100%;
-            margin-top: 20px;
             border-collapse: collapse;
-            background: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-top: 15px;
         }
+
         th, td {
+            border: 1px solid #dee2e6;
             padding: 12px;
-            border-bottom: 1px solid #dee2e6;
-            text-align: center;
+            text-align: left;
         }
-        th { background-color: #212529; color: white; }
-        .valido { color: #198754; font-weight: bold; }
-        .invalido { color: #dc3545; font-weight: bold; }
+
+        th {
+            background-color: #f8f9fa;
+        }
+
+        /* Botones */
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-sizing: border-box;
+        }
+
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-success:hover { background-color: #218838; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-danger:hover { background-color: #c82333; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover { background-color: #5a6268; }
+
+        #login-status {
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <p>Escáner QR en Tiempo Real</p>
-    <h1>Lector QR Secuencial</h1>
-    
-    <div class="info-secuencia">
-        Siguiente esperado: <span id="numero-esperado">1</span>
-    </div>
-
-    <div class="controles">
-        <button id="btn-iniciar">Encender Cámara</button>
-        <select id="selector-camara" style="display:none;"></select>
-    </div>
-
-    <div id="camara-contenedor">
-        <video id="video-feed" autoplay playsinline muted></video>
-    </div>
-
-    <h2>Historial de Registros</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Hora</th>
-                <th>QR</th>
-                <th>Resultado</th>
-            </tr>
-        </thead>
-        <tbody id="tabla-historial"></tbody>
-    </table>
-
-    <button id="btn-reiniciar" class="btn-peligro" style="margin-top:20px;">Reiniciar Todo</button>
-
-    <script>
-        let siguienteEsperado = 1;
-        let listaDispositivos = [];
-        let flujoActual = null;
-
-        const video = document.getElementById('video-feed');
-        const btnIniciar = document.getElementById('btn-iniciar');
-        const selectorCamara = document.getElementById('selector-camara');
-        const txtEsperado = document.getElementById('numero-esperado');
-        const tablaHistorial = document.getElementById('tabla-historial');
-        const btnReiniciar = document.getElementById('btn-reiniciar');
-
-        // Verificar soporte nativo de QR del sistema operativo/navegador
-        if (!('BarcodeDetector' in window)) {
-            alert('Tu navegador no soporta lectura nativa de QR. Asegúrate de usar Chrome, Edge o Safari actualizado y bajo una conexión HTTPS.');
-        }
-
-        const detectorCodigos = new BarcodeDetector({ formats: ['qr_code'] });
-
-        // Buscar cámaras disponibles en el móvil
-        async function obtenerCamaras() {
-            try {
-                const dispositivos = await navigator.mediaDevices.enumerateDevices();
-                listaDispositivos = dispositivos.filter(d => d.kind === 'videoinput');
-                
-                selectorCamara.innerHTML = '';
-                listaDispositivos.forEach((dispositivo, index) => {
-                    const opcion = document.createElement('option');
-                    opcion.value = dispositivo.deviceId;
-                    opcion.text = dispositivo.label || `Cámara ${index + 1}`;
-                    // Intentar preseleccionar la cámara trasera (generalmente contiene "environment" o "back")
-                    if (dispositivo.label.toLowerCase().includes('back') || dispositivo.label.toLowerCase().includes('trasera')) {
-                        opcion.selected = true;
-                    }
-                    selectorCamara.appendChild(opcion);
-                });
-
-                if (listaDispositivos.length > 1) {
-                    selectorCamara.style.display = 'inline-block';
-                }
-            } catch (e) {
-                console.error("Error enumerando cámaras:", e);
-            }
-        }
-
-        // Iniciar el flujo de video de la cámara seleccionada
-        async function arrancarCamara(deviceId = null) {
-            if (flujoActual) {
-                flujoActual.getTracks().forEach(track => track.stop());
-            }
-
-            const opcionesControles = deviceId 
-                ? { video: { deviceId: { exact: deviceId } } }
-                : { video: { facingMode: 'environment' } }; // 'environment' prioriza la cámara trasera
-
-            try {
-                flujoActual = await navigator.mediaDevices.getUserMedia(opcionesControles);
-                video.srcObject = flujoActual;
-                btnIniciar.style.display = 'none';
-                
-                // Actualizar lista de nombres de cámaras tras dar el permiso
-                await obtenerCamaras();
-                
-                // Empezar el ciclo de escaneo
-                escanearFotograma();
-            } catch (err) {
-                alert("Error al acceder a la cámara. Recuerda que DEBES usar HTTPS:// para que el teléfono te permita activar la cámara.");
-                console.error(err);
-            }
-        }
-
-        // Analizar el video frame por frame en tiempo real
-        async function escanearFotograma() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                try {
-                    const codigos = await detectorCodigos.detect(video);
-                    if (codigos.length > 0) {
-                        procesarQR(codigos[0].rawValue);
-                    }
-                } catch (e) {
-                    console.error("Error detectando código:", e);
-                }
-            }
-            // Mantiene el bucle activo de forma nativa y fluida
-            requestAnimationFrame(escanearFotograma);
-        }
-
-        let ultimoCodigoLeido = null;
-        let tiempoUltimoEscaneo = 0;
-
-        function procesarQR(textoQR) {
-            const ahoraTiempo = Date.now();
-            // Evitar lecturas duplicadas seguidas del mismo código en menos de 2 segundos
-            if (textoQR === ultimoCodigoLeido && (ahoraTiempo - tiempoUltimoEscaneo) < 2000) return;
-
-            ultimoCodigoLeido = textoQR;
-            tiempoUltimoEscaneo = ahoraTiempo;
-
-            const ahora = new Date();
-            const horaFormateada = ahora.toLocaleTimeString();
-            let resultadoTexto = "";
-            let claseResultado = "";
-
-            if (textoQR.trim() === String(siguienteEsperado)) {
-                resultadoTexto = "Válido";
-                claseResultado = "valido";
-                siguienteEsperado++;
-                txtEsperado.innerText = siguienteEsperado;
-            } else {
-                resultadoTexto = "Incorrecto";
-                claseResultado = "invalido";
-            }
-
-            const nuevaFila = document.createElement('tr');
-            nuevaFila.innerHTML = `
-                <td>${horaFormateada}</td>
-                <td>${textoQR}</td>
-                <td class="${claseResultado}">${resultadoTexto}</td>
-            `;
-            tablaHistorial.insertBefore(nuevaFila, tablaHistorial.firstChild);
-        }
-
-        // Eventos
-        btnIniciar.addEventListener('click', () => arrancarCamara(selectorCamara.value));
-        selectorCamara.addEventListener('change', () => arrancarCamara(selectorCamara.value));
+    <!-- ========================================== -->
+    <!-- VISTA 1: PANTALLA DE INICIO DE SESIÓN QR   -->
+    <!-- ========================================== -->
+    <div id="login-container">
+        <h2>🔒 Inicio de Sesión</h2>
+        <p>Apunta tu QR a la cámara o súbelo desde tu galería para ingresar.</p>
         
-        btnReiniciar.addEventListener('click', () => {
-            siguienteEsperado = 1;
-            txtEsperado.innerText = siguienteEsperado;
-            tablaHistorial.innerHTML = '';
-            ultimoCodigoLeido = null;
+        <!-- Escáner de cámara para el Login -->
+        <div id="reader-login"></div>
+        
+        <p style="color: #666; margin: 15px 0;">— O también —</p>
+        
+        <!-- Input oculto y botón estilizado para subir imagen de la galería -->
+        <label for="qr-input-file" class="btn btn-primary">📁 Seleccionar QR de la Galería</label>
+        <input type="file" id="qr-input-file" accept="image/*" class="hidden">
+        
+        <!-- Mensaje en caso de error de autenticación -->
+        <p id="login-status"></p>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- VISTA 2: TU PANEL DE ESCANEO SECUENCIAL   -->
+    <!-- ========================================== -->
+    <div id="panel-secuencial" class="hidden">
+        
+        <div class="panel-header">
+            <h1>Escáner Secuencial</h1>
+            <p>Sesión activa • <a href="#" onclick="cerrarSesion()" style="color: #dc3545; text-decoration: none; font-weight: bold;">Cerrar Sesión</a></p>
+        </div>
+
+        <!-- Estado actual del escáner del panel -->
+        <div class="status-box">
+            Estado: <span id="panel-state-text" class="loading-text">QR en Espera / CARGANDO...</span>
+        </div>
+
+        <!-- Botón para encender la cámara del panel secuencial -->
+        <button class="btn btn-success" id="btn-toggle-cam" onclick="encenderCamaraPanel()">Encender Cámara</button>
+
+        <!-- Contenedor para el visor de la cámara en el panel -->
+        <div id="reader-panel"></div>
+
+        <!-- Tabla del Historial de Registros -->
+        <h2>Historial de Registros</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>Contenido QR</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="historial-tbody">
+                <!-- Aquí se irán insertando tus filas secuenciales por JavaScript -->
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #888;">No hay registros secuenciales aún</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Botón para reiniciar la secuencia actual -->
+        <button class="btn btn-secondary" style="margin-top: 20px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LÓGICA JAVASCRIPT DE AMBAS PANTALLAS       -->
+    <!-- ========================================== -->
+    <script>
+        // 1. Configuración de credenciales de acceso simuladas
+        const ACCESO_PERMITIDO = "USUARIO_AUTORIZADO_2026"; 
+
+        // Instancias independientes de la librería para evitar conflictos de cámara
+        let loginScanner = null;
+        let panelScanner = null;
+
+        // Al cargar la página, iniciamos automáticamente el escáner del Login
+        window.addEventListener('DOMContentLoaded', () => {
+            inicializarLoginCamara();
+            configurarAccesoGaleria();
         });
-    </script>
-</body>
-</html>
+
+        // --- SECCIÓN: INICIO DE SESIÓN ---
+
+        function inicializarLoginCamara() {
+            loginScanner = new Html5Qrcode("reader-login");
+            const config = { fps: 10, qrbox: { width: 230, height: 230 } };
+
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length > 0) {
+                    // Selecciona la cámara trasera si detecta más de una
+                    const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
+                    loginScanner.start(cameraId, config, procesarLoginExitoso, (err) => {
+                        // Silenciar logs repetitivos de no-detección en el feed
+                    }).catch(err => {
+                        console.log("No se pudo iniciar la cámara automáticamente:", err);
+                    });
+                }
+            }).catch(err => {
+                console.error("Error obteniendo dispositivos de video:", err);
+            });
+        }
+
+        function configurarAccesoGaleria() {
+            const fileInput = document.getElementById('qr-input-file');
+            fileInput.addEventListener('change', e => {
+                if (e.target.files.length === 0) return;
+
+                const imageFile = e.target.files[0];
+                
+                // Si la cámara del login está activa, creamos una instancia rápida para decodificar el archivo
+                const detectorArchivo = new Html5Qrcode("reader-login");
+                detectorArchivo.scanFile(imageFile, true)
+                    .then(decodedText => {
+                        procesarLoginExitoso(decodedText);
+                    })
+                    .catch(err => {
+                        document.getElementById("login-status").innerText = "❌ No se encontró un código QR válido en la imagen.";
+                        console.error(err);
+                    });
+            });
+        }
+
+        function procesarLoginExitoso(contenidoQr) {
+            // Validamos que el contenido corresponda al acceso
+            if (contenidoQr.trim() === ACCESO_PERMITIDO) {
+                
+                // Apagamos la cámara de la pantalla de login de inmediato si está corriendo
+                if (loginScanner && loginScanner.isScanning) {
+                    loginScanner.stop().then(() => darAccesoAlPanel());
+                } else {
+                    darAccesoAlPanel();
+                }
+            } else {
+                document.getElementById("login-status").innerText = "❌ Acceso denegado. Código QR no registrado.";
+            }
+        }
+
+        function darAccesoAlPanel() {
+            // Transición visual quitando y poniendo clases CSS
+            document.getElementById("login-container").classList.add("hidden");
