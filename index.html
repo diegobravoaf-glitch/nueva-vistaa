@@ -18,7 +18,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            -webkit-user-select: none; /* Mejor respuesta táctil */
         }
 
         .hidden {
@@ -76,15 +75,11 @@
         }
 
         .auth-switch {
-            margin-top: 20px;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #f1f3f5;
             font-size: 0.95em;
             color: #6c757d;
-        }
-
-        .auth-switch a {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
         }
 
         /* Contenedor del Panel Secuencial */
@@ -179,13 +174,22 @@
             cursor: pointer;
             box-sizing: border-box;
             text-align: center;
-            -webkit-tap-highlight-color: transparent;
+            /* Elimina el recuadro gris molesto al tocar en iPhones */
+            -webkit-tap-highlight-color: transparent; 
         }
 
         .btn-primary { background-color: #007bff; color: white; }
         .btn-success { background-color: #28a745; color: white; }
         .btn-danger { background-color: #dc3545; color: white; }
         .btn-secondary { background-color: #6c757d; color: white; }
+        
+        /* Botón de texto alternativo para cambios de pantalla */
+        .btn-outline {
+            background-color: transparent;
+            color: #007bff;
+            border: 2px solid #007bff;
+            margin-top: 10px;
+        }
 
         .status-message {
             font-weight: bold;
@@ -205,7 +209,6 @@
         
         <div class="form-group">
             <label for="login-username">Usuario</label>
-            <!-- autocapitalize="none" evita que el celular ponga la primera letra en mayúscula automáticamente -->
             <input type="text" id="login-username" placeholder="Tu usuario" autocapitalize="none" autocomplete="username">
         </div>
         
@@ -218,7 +221,8 @@
         <div id="login-msg" class="status-message error"></div>
 
         <div class="auth-switch">
-            ¿No tienes cuenta? <a href="#" onclick="mostrarPantalla('registro')">Regístrate aquí</a>
+            <span>¿No tienes cuenta?</span>
+            <button class="btn btn-outline" onclick="mostrarPantalla('registro')">Crear una cuenta nueva</button>
         </div>
     </div>
 
@@ -247,11 +251,12 @@
             <input type="password" id="reg-password" placeholder="Mínimo 4 caracteres">
         </div>
 
-        <button class="btn btn-success" onclick="procesarRegistro()">Crear Cuenta</button>
+        <button class="btn btn-success" onclick="procesarRegistro()">Registrarme</button>
         <div id="reg-msg" class="status-message"></div>
 
         <div class="auth-switch">
-            ¿Ya tienes cuenta? <a href="#" onclick="mostrarPantalla('login')">Inicia sesión</a>
+            <span>¿Ya tienes cuenta?</span>
+            <button class="btn btn-outline" onclick="mostrarPantalla('login')">Volver al Inicio de Sesión</button>
         </div>
     </div>
 
@@ -297,8 +302,3 @@
         function mostrarPantalla(pantalla) {
             document.getElementById("login-container").classList.add("hidden");
             document.getElementById("registro-container").classList.add("hidden");
-            document.getElementById("panel-secuencial").classList.add("hidden");
-            
-            document.getElementById("login-msg").innerText = "";
-            document.getElementById("reg-msg").innerText = "";
-
