@@ -8,7 +8,7 @@
     <!-- Librería oficial para decodificar códigos QR -->
     <script src="https://unpkg.com" type="text/javascript"></script>
     <style>
-        /* Diseño adaptado 100% a pantallas de celulares */
+        /* Diseño adaptado 100% a pantallas de celulares y PC */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f8f9fa;
@@ -35,6 +35,13 @@
             text-align: center;
             margin-top: 20px;
             box-sizing: border-box;
+        }
+
+        /* Ajuste para que en PC no se vea gigante a lo ancho */
+        @media (min-width: 600px) {
+            .auth-container, #panel-secuencial {
+                max-width: 500px !important;
+            }
         }
 
         .auth-container h2 {
@@ -174,7 +181,6 @@
             cursor: pointer;
             box-sizing: border-box;
             text-align: center;
-            /* Elimina el recuadro gris molesto al tocar en iPhones */
             -webkit-tap-highlight-color: transparent; 
         }
 
@@ -222,7 +228,8 @@
 
         <div class="auth-switch">
             <span>¿No tienes cuenta?</span>
-            <button class="btn btn-outline" onclick="mostrarPantalla('registro')">Crear una cuenta nueva</button>
+            <!-- Corregido el parámetro a 'registro-container' -->
+            <button class="btn btn-outline" onclick="mostrarPantalla('registro-container')">Crear una cuenta nueva</button>
         </div>
     </div>
 
@@ -256,7 +263,8 @@
 
         <div class="auth-switch">
             <span>¿Ya tienes cuenta?</span>
-            <button class="btn btn-outline" onclick="mostrarPantalla('login')">Volver al Inicio de Sesión</button>
+            <!-- Corregido el parámetro a 'login-container' -->
+            <button class="btn btn-outline" onclick="mostrarPantalla('login-container')">Volver al Inicio de Sesión</button>
         </div>
     </div>
 
@@ -294,11 +302,3 @@
         </div>
 
         <button class="btn btn-secondary" style="margin-top: 15px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
-    </div>
-
-    <script>
-        let panelScanner = null;
-
-        function mostrarPantalla(pantalla) {
-            document.getElementById("login-container").classList.add("hidden");
-            document.getElementById("registro-container").classList.add("hidden");
