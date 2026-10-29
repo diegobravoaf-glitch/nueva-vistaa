@@ -145,8 +145,7 @@
             font-weight: 600;
         }
 
-        /* Botón basado en Enlaces para Máxima Compatibilidad Móvil */
-        .btn-link-táctil {
+        .btn-input {
             display: block;
             width: 100%;
             padding: 14px;
@@ -157,17 +156,15 @@
             font-weight: bold;
             cursor: pointer;
             text-align: center;
-            text-decoration: none;
             background-color: #007bff;
-            color: white !important;
+            color: white;
             box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-appearance: none;
         }
 
-        .btn-cam-on { background-color: #28a745; }
-        .btn-cam-off { background-color: #dc3545; }
-        .btn-clear { background-color: #6c757d; }
+        .btn-cam-on { background-color: #28a745; color: white; }
+        .btn-cam-off { background-color: #dc3545; color: white; }
+        .btn-clear { background-color: #6c757d; color: white; }
 
         .status-message {
             font-weight: bold;
@@ -179,27 +176,25 @@
 </head>
 <body>
 
-    <!-- PANTALLA DE INICIO DE SESIÓN -->
+    <!-- PANTALLA DE INICIO DE SESIÓN DIRECTO -->
     <div id="login-container" class="auth-container">
-        <h2>🔒 Acceso Único</h2>
-        <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Ingresa las credenciales obligatorias asignadas.</p>
+        <h2>🔒 Acceso al Panel</h2>
+        <p style="color: #6c757d; margin: 0 0 20px 0; font-size: 0.9em;">Ingresa tu nombre y la contraseña maestra.</p>
         
         <div class="form-group">
-            <label>Usuario</label>
-            <input type="text" id="login-username" placeholder="Escribe el usuario único" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <label>Nombre de Usuario</label>
+            <input type="text" id="login-username" placeholder="Escribe tu nombre" autocomplete="off" autocapitalize="off" autocorrect="off">
         </div>
         
         <div class="form-group">
-            <label>Contraseña</label>
-            <input type="password" id="login-password" placeholder="Escribe la clave única" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <label>Contraseña Autorizada</label>
+            <input type="password" id="login-password" placeholder="Clave maestra" autocomplete="off" autocapitalize="off" autocorrect="off">
         </div>
 
-        <!-- Botón cambiado a elemento hipervínculo seguro para disparar el script móvil -->
-        <a href="javascript:void(0);" class="btn-link-táctil" onclick="procesarLogin(); return false;">Ingresar al Escáner</a>
+        <button type="button" class="btn-input" onclick="procesarLogin()">Ingresar al Escáner</button>
         
         <div id="login-msg" class="status-message"></div>
     </div>
-
 
     <!-- PANEL DE ESCANEO SECUENCIAL -->
     <div id="panel-secuencial" class="hidden">
@@ -207,7 +202,7 @@
             <h1>Escáner Secuencial</h1>
             <p style="margin:0; font-size:0.9em; color:#495057;">
                 Operador: <span id="nombre-operador" style="font-weight: bold; color: #007bff;">Usuario</span> • 
-                <a href="javascript:void(0);" onclick="cerrarSesion(); return false;" style="color: #dc3545; text-decoration: none; font-weight: bold;">Salir</a>
+                <a href="#" onclick="cerrarSesion(); return false;" style="color: #dc3545; text-decoration: none; font-weight: bold;">Salir</a>
             </p>
         </div>
 
@@ -215,7 +210,7 @@
             Estado: <span id="panel-state-text" class="loading-text">QR en Espera / CARGANDO...</span>
         </div>
 
-        <a href="javascript:void(0);" id="btn-toggle-cam" class="btn-link-táctil btn-cam-on" onclick="encenderCamaraPanel(); return false;">Encender Cámara</a>
+        <button type="button" id="btn-toggle-cam" class="btn-input btn-cam-on" onclick="encenderCamaraPanel()">Encender Cámara</button>
 
         <div id="reader-panel"></div>
 
@@ -237,35 +232,32 @@
             </table>
         </div>
 
-        <a href="javascript:void(0);" class="btn-link-táctil btn-clear" style="margin-top: 15px;" onclick="reiniciarSecuencia(); return false;">Reiniciar Secuencia</a>
+        <button type="button" class="btn-input btn-clear" style="margin-top: 15px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
     </div>
 
     <script>
         let panelScanner = null;
-        
-        // Credenciales estrictas requeridas
         const USUARIO_VALIDO = "diego";
-        const CLAVE_VALIDA = "diego12345"; 
+        const CLAVE_MAESTRA = "diego12345"; 
 
         function procesarLogin() {
-            const userField = document.getElementById("login-username").value.trim().toLowerCase();
-            const passField = document.getElementById("login-password").value.trim().toLowerCase();
+            const usuario = document.getElementById("login-username").value.trim().toLowerCase();
+            const clave = document.getElementById("login-password").value.trim().toLowerCase();
             const msgBox = document.getElementById("login-msg");
 
-            if (!userField || !passField) {
+            if (!usuario || !clave) {
                 msgBox.style.color = "#dc3545";
-                msgBox.innerText = "❌ Completa ambos campos.";
+                msgBox.innerText = "❌ Por favor completa ambos campos.";
                 return;
             }
 
-            if (userField === USUARIO_VALIDO && passField === CLAVE_VALIDA) {
+            if (usuario === USUARIO_VALIDO && clave === CLAVE_MAESTRA) {
                 msgBox.style.color = "#28a745";
-                msgBox.innerText = "✓ Acceso correcto. Cargando...";
+                msgBox.innerText = "✓ Credenciales correctas. Abriendo panel...";
 
-                document.getElementById("nombre-operador").innerText = userField.toUpperCase();
+                document.getElementById("nombre-operador").innerText = usuario.toUpperCase();
                 
-                // Forzar el cambio eliminando clases y modificando el display de raíz
-                document.getElementById("login-container").style.display = "none";
+                document.getElementById("login-container").classList.add("hidden");
                 document.getElementById("panel-secuencial").classList.remove("hidden");
                 
                 document.getElementById("login-username").value = "";
@@ -283,7 +275,7 @@
             if (panelScanner && panelScanner.isScanning) {
                 panelScanner.stop().then(() => {
                     btn.innerText = "Encender Cámara";
-                    btn.className = "btn-link-táctil btn-cam-on";
+                    btn.className = "btn-input btn-cam-on";
                     document.getElementById("panel-state-text").innerText = "Escáner Pausado";
                     document.getElementById("panel-state-text").className = "";
                 });
@@ -300,3 +292,11 @@
                 { facingMode: "environment" }, 
                 config, 
                 (decodedText) => {
+                    registrarCodigoEnHistorial(decodedText);
+                    if (navigator.vibrate) navigator.vibrate(100);
+                }, 
+                (err) => { }
+            ).then(() => {
+                btn.innerText = "Apagar Cámara";
+                btn.className = "btn-input btn-cam-off";
+                document.getElementById("panel-state-text").innerText = "⚙️ ESCANEANDO SECUENCIALMENTE...";
