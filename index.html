@@ -228,7 +228,6 @@
 
         <div class="auth-switch">
             <span>¿No tienes cuenta?</span>
-            <!-- Corregido el parámetro a 'registro-container' -->
             <button class="btn btn-outline" onclick="mostrarPantalla('registro-container')">Crear una cuenta nueva</button>
         </div>
     </div>
@@ -263,7 +262,6 @@
 
         <div class="auth-switch">
             <span>¿Ya tienes cuenta?</span>
-            <!-- Corregido el parámetro a 'login-container' -->
             <button class="btn btn-outline" onclick="mostrarPantalla('login-container')">Volver al Inicio de Sesión</button>
         </div>
     </div>
@@ -302,3 +300,8 @@
         </div>
 
         <button class="btn btn-secondary" style="margin-top: 15px;" onclick="reiniciarSecuencia()">Reiniciar Secuencia</button>
+    </div> <!-- Etiqueta div de cierre corregida aquí -->
+
+    <script>
+        let panelScanner = null;
+
