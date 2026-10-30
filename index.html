@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lector QR Secuencial Móvil</title>
     <style>
         /* --- ESTILOS DE LA CORTINA DE LOGIN (Inmune a fallos) --- */
@@ -13,7 +13,7 @@
             width: 100%;
             height: 100%;
             background-color: #f8f9fa;
-            z-index: 99999; /* Se superpone por encima de todo */
+            z-index: 99999;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -53,6 +53,7 @@
             font-weight: bold;
             margin-top: 10px;
             font-size: 0.9em;
+            min-height: 20px;
         }
         .btn-ingresar {
             width: 100%;
@@ -145,21 +146,21 @@
 <body>
 
     <!-- ========================================== -->
-    <!-- CORTINA DE SEGURIDAD (TAPA LA PÁGINA)      -->
+    <!-- CORTINA DE ACCESO PREVIA                   -->
     <!-- ========================================== -->
     <div id="cortina-login">
         <div class="login-card">
-            <h2>🔒 Acceso al Sistema</h2>
-            <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Por favor ingresa tus credenciales de ronda.</p>
+            <h2>🔒 Acceso al Panel</h2>
+            <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Ingresa las credenciales obligatorias asignadas.</p>
             
             <div class="form-group">
                 <label>Usuario</label>
-                <input type="text" id="user" placeholder="diego" autocomplete="off" autocapitalize="none" autocorrect="off">
+                <input type="text" id="user" placeholder="diego" autocomplete="off" autocapitalize="off" autocorrect="off">
             </div>
             
             <div class="form-group">
                 <label>Contraseña</label>
-                <input type="password" id="pass" placeholder="12345" autocomplete="off" autocapitalize="none" autocorrect="off">
+                <input type="password" id="pass" placeholder="12345" autocomplete="off" autocapitalize="off" autocorrect="off">
             </div>
             
             <button type="button" class="btn-ingresar" onclick="ejecutarLoginCortina()">Entrar al Escáner</button>
@@ -168,9 +169,8 @@
         </div>
     </div>
 
-
     <!-- ========================================== -->
-    <!-- TU APLICATIVO ORIGINAL INTACTO             -->
+    <!-- TU ENTORNO NATIVO ORIGINAL                 -->
     <!-- ========================================== -->
     <p>Escáner QR en Tiempo Real</p>
     <h1>Lector QR Secuencial</h1>
@@ -202,29 +202,25 @@
 
     <button id="btn-reiniciar" class="btn-peligro" style="margin-top:20px;">Reiniciar Todo</button>
 
-
     <!-- ========================================== -->
-    <!-- TU JAVASCRIPT ORIGINAL INTACTO + FUNCIÓN   -->
+    <!-- SCRIPTS DE CONTROL                         -->
     <!-- ========================================== -->
     <script>
-        // FUNCIÓN DE LA CORTINA: Si es correcto, simplemente desaparece el bloqueo
+        // Lógica de validación aislada sin tocar variables de hardware
         function ejecutarLoginCortina() {
             const usuario = document.getElementById("user").value.trim().toLowerCase();
             const clave = document.getElementById("pass").value.trim();
             const errorBox = document.getElementById("mensaje-error");
 
             if (usuario === "diego" && clave === "12345") {
-                // Removemos la cortina por completo del mapa visual
                 document.getElementById("cortina-login").style.display = "none";
-                
-                // Ejecutamos tu función nativa de buscar cámaras que ya tenías abajo
-                obtenerCamaras();
+                obtenerCamaras(); // Arranca tu mapeo nativo tras validar
             } else {
-                errorBox.innerText = "❌ Datos incorrectos de acceso";
+                errorBox.innerText = "❌ Credenciales inválidas de ronda";
             }
         }
 
-        // --- DE AQUÍ EN ADELANTE ES TU CÓDIGO ORIGINAL SIN NINGÚN CAMBIO ---
+        // --- CÓDIGO NATIVO ORIGINAL COMPLETADO ---
         let siguienteEsperado = 1;
         let listaDispositivos = [];
         let flujoActual = null;
@@ -236,14 +232,12 @@
         const tablaHistorial = document.getElementById('tabla-historial');
         const btnReiniciar = document.getElementById('btn-reiniciar');
 
-        // Verificar soporte nativo de QR
         if (!('BarcodeDetector' in window)) {
             alert('Tu navegador no soporta lectura nativa de QR. Asegúrate de usar Chrome, Edge o Safari actualizado y bajo una conexión HTTPS.');
         }
 
         const detectorCodigos = new BarcodeDetector({ formats: ['qr_code'] });
 
-        // Buscar cámaras disponibles en el móvil
         async function obtenerCamaras() {
             try {
                 const dispositivos = await navigator.mediaDevices.enumerateDevices();
@@ -268,7 +262,6 @@
             }
         }
 
-        // Iniciar el flujo de video de la cámara seleccionada
         async function arrancarCamara(deviceId = null) {
             if (flujoActual) {
                 flujoActual.getTracks().forEach(track => track.stop());
@@ -285,3 +278,10 @@
                 
                 await obtenerCamaras();
                 escanearFotograma();
+            } catch (err) {
+                alert("Error al acceder a la cámara. Recuerda que DEBES usar HTTPS:// para que el teléfono te permita activar la cámara.");
+                console.error(err);
+            }
+        }
+
+        async function escanearFotograma() {
