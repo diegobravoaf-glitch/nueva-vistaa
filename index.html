@@ -2,72 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lector QR Secuencial Móvil</title>
     <style>
-        /* --- ESTILOS DE LA CORTINA DE LOGIN (Inmune a fallos) --- */
-        #cortina-login {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f8f9fa;
-            z-index: 99999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .login-card {
-            background: #fff;
-            padding: 30px 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        .form-group {
-            text-align: left;
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 1em;
-        }
-        #mensaje-error {
-            color: #dc3545;
-            font-weight: bold;
-            margin-top: 10px;
-            font-size: 0.9em;
-            min-height: 20px;
-        }
-        .btn-ingresar {
-            width: 100%;
-            padding: 14px;
-            background-color: #0d6efd;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        /* --- TUS ESTILOS ORIGINALES INTACTOS --- */
         body {
             font-family: system-ui, -apple-system, sans-serif;
             max-width: 500px;
@@ -77,6 +14,45 @@
             background-color: #f8f9fa;
             color: #212529;
         }
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .error-msg {
+            color: red;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        /* Ocultar secciones por defecto */
+        .hidden {
+            display: none !important;
+        }
+
         #camara-contenedor {
             width: 100%;
             max-width: 400px;
@@ -118,6 +94,9 @@
             cursor: pointer;
             font-weight: bold;
         }
+        button:hover {
+            opacity: 0.9;
+        }
         button.btn-peligro { background-color: #dc3545; }
         select {
             padding: 10px;
@@ -145,82 +124,91 @@
 </head>
 <body>
 
-    <!-- ========================================== -->
-    <!-- CORTINA DE ACCESO PREVIA                   -->
-    <!-- ========================================== -->
-    <div id="cortina-login">
-        <div class="login-card">
-            <h2>🔒 Acceso al Panel</h2>
-            <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Ingresa las credenciales obligatorias asignadas.</p>
-            
-            <div class="form-group">
-                <label>Usuario</label>
-                <input type="text" id="user" placeholder="diego" autocomplete="off" autocapitalize="off" autocorrect="off">
-            </div>
-            
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="pass" placeholder="12345" autocomplete="off" autocapitalize="off" autocorrect="off">
-            </div>
-            
-            <button type="button" class="btn-ingresar" onclick="ejecutarLoginCortina()">Entrar al Escáner</button>
-            
-            <div id="mensaje-error"></div>
+    <!-- SECCIÓN DE LOGIN -->
+    <div id="login-section" class="container">
+        <h2>Iniciar Sesión</h2>
+        <div class="form-group">
+            <label for="username">Usuario:</label>
+            <input type="text" id="username" placeholder="Ingresa tu usuario">
+        </div>
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" placeholder="Ingresa tu contraseña">
+        </div>
+        <button onclick="validarLogin()" style="width: 100%;">Entrar</button>
+        <div id="error-message" class="error-msg"></div>
+    </div>
+
+    <!-- SECCIÓN DE LA APLICACIÓN (LECTOR QR) -->
+    <div id="app-section" class="hidden">
+        <p>Escáner QR en Tiempo Real</p>
+        <h1>Lector QR Secuencial</h1>
+        
+        <div class="info-secuencia">
+            Siguiente esperado: <span id="numero-esperado">1</span>
+        </div>
+
+        <div class="controles">
+            <button id="btn-iniciar">Encender Cámara</button>
+            <select id="selector-camara" style="display:none;"></select>
+        </div>
+
+        <div id="camara-contenedor">
+            <video id="video-feed" autoplay playsinline muted></video>
+        </div>
+
+        <h2>Historial de Registros</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>QR</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-historial"></tbody>
+        </table>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
+            <button id="btn-reiniciar" class="btn-peligro">Reiniciar Todo</button>
+            <button onclick="cerrarSesion()" style="background-color: #6c757d;">Cerrar Sesión</button>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- TU ENTORNO NATIVO ORIGINAL                 -->
-    <!-- ========================================== -->
-    <p>Escáner QR en Tiempo Real</p>
-    <h1>Lector QR Secuencial</h1>
-    
-    <div class="info-secuencia">
-        Siguiente esperado: <span id="numero-esperado">1</span>
-    </div>
-
-    <div class="controles">
-        <button id="btn-iniciar">Encender Cámara</button>
-        <select id="selector-camara" style="display:none;"></select>
-    </div>
-
-    <div id="camara-contenedor">
-        <video id="video-feed" autoplay playsinline muted></video>
-    </div>
-
-    <h2>Historial de Registros</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Hora</th>
-                <th>QR</th>
-                <th>Resultado</th>
-            </tr>
-        </thead>
-        <tbody id="tabla-historial"></tbody>
-    </table>
-
-    <button id="btn-reiniciar" class="btn-peligro" style="margin-top:20px;">Reiniciar Todo</button>
-
-    <!-- ========================================== -->
-    <!-- SCRIPTS DE CONTROL                         -->
-    <!-- ========================================== -->
     <script>
-        // Lógica de validación aislada sin tocar variables de hardware
-        function ejecutarLoginCortina() {
-            const usuario = document.getElementById("user").value.trim().toLowerCase();
-            const clave = document.getElementById("pass").value.trim();
-            const errorBox = document.getElementById("mensaje-error");
+        // ================= CONFIGURACIÓN DE LOGIN =================
+        const USUARIO_DEFECTO = "admin";
+        const PASSWORD_DEFECTO = "1234";
 
-            if (usuario === "diego" && clave === "12345") {
-                document.getElementById("cortina-login").style.display = "none";
-                obtenerCamaras(); // Arranca tu mapeo nativo tras validar
+        function validarLogin() {
+            const userIngresado = document.getElementById("username").value;
+            const passIngresado = document.getElementById("password").value;
+            const errorDiv = document.getElementById("error-message");
+
+            if (userIngresado === USUARIO_DEFECTO && passIngresado === PASSWORD_DEFECTO) {
+                document.getElementById("login-section").classList.add("hidden");
+                document.getElementById("app-section").classList.remove("hidden");
+                errorDiv.textContent = "";
             } else {
-                errorBox.innerText = "❌ Credenciales inválidas de ronda";
+                errorDiv.textContent = "Usuario o contraseña incorrectos.";
             }
         }
 
-        // --- CÓDIGO NATIVO ORIGINAL COMPLETADO ---
+        function cerrarSesion() {
+            // Apagar la cámara si está activa al cerrar sesión
+            if (flujoActual) {
+                flujoActual.getTracks().forEach(track => track.stop());
+                flujoActual = null;
+                btnIniciar.style.display = 'inline-block';
+            }
+            // Limpiar campos y volver al login
+            document.getElementById("username").value = "";
+            document.getElementById("password").value = "";
+            document.getElementById("app-section").classList.add("hidden");
+            document.getElementById("login-section").classList.remove("hidden");
+        }
+
+        // ================= CÓDIGO DEL LECTOR QR =================
         let siguienteEsperado = 1;
         let listaDispositivos = [];
         let flujoActual = null;
@@ -232,6 +220,7 @@
         const tablaHistorial = document.getElementById('tabla-historial');
         const btnReiniciar = document.getElementById('btn-reiniciar');
 
+        // Verificar soporte nativo de QR
         if (!('BarcodeDetector' in window)) {
             alert('Tu navegador no soporta lectura nativa de QR. Asegúrate de usar Chrome, Edge o Safari actualizado y bajo una conexión HTTPS.');
         }
@@ -285,3 +274,65 @@
         }
 
         async function escanearFotograma() {
+            // Solo escanear si la sección de la app está visible
+            if (document.getElementById('app-section').classList.contains('hidden')) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                try {
+                    const codigos = await detectorCodigos.detect(video);
+                    if (codigos.length > 0) {
+                        procesarQR(codigos[0].rawValue);
+                    }
+                } catch (e) {
+                    console.error("Error detectando código:", e);
+                }
+            }
+            requestAnimationFrame(escanearFotograma);
+        }
+
+        let ultimoCodigoLeido = null;
+        let tiempoUltimoEscaneo = 0;
+
+        function procesarQR(textoQR) {
+            const ahoraTiempo = Date.now();
+            if (textoQR === ultimoCodigoLeido && (ahoraTiempo - tiempoUltimoEscaneo) < 2000) return;
+
+            ultimoCodigoLeido = textoQR;
+            tiempoUltimoEscaneo = ahoraTiempo;
+
+            const ahora = new Date();
+            const horaFormateada = ahora.toLocaleTimeString();
+            let resultadoTexto = "";
+            let claseResultado = "";
+
+            if (textoQR.trim() === String(siguienteEsperado)) {
+                resultadoTexto = "Válido";
+                claseResultado = "valido";
+                siguienteEsperado++;
+                txtEsperado.innerText = siguienteEsperado;
+            } else {
+                resultadoTexto = "Incorrecto";
+                claseResultado = "invalido";
+            }
+
+            const nuevaFila = document.createElement('tr');
+            nuevaFila.innerHTML = `
+                <td>${horaFormateada}</td>
+                <td>${textoQR}</td>
+                <td class="${claseResultado}">${resultadoTexto}</td>
+            `;
+            tablaHistorial.insertBefore(nuevaFila, tablaHistorial.firstChild);
+        }
+
+        btnIniciar.addEventListener('click', () => arrancarCamara(selectorCamara.value));
+        selectorCamara.addEventListener('change', () => arrancarCamara(selectorCamara.value));
+        
+        btnReiniciar.addEventListener('click', () => {
+            siguienteEsperado = 1;
+            txtEsperado.innerText = siguienteEsperado;
+            tablaHistorial.innerHTML = '';
+            ultimoCodigoLeido = null;
+        });
+    </script>
+</body>
+</html>
