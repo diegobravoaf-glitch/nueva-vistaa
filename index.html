@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lector QR Secuencial Móvil</title>
+    <title>Lector QR Secuencial Móvil (6 Puntos)</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -48,7 +48,6 @@
             text-align: center;
             margin-top: 10px;
         }
-        /* Ocultar secciones por defecto */
         .hidden {
             display: none !important;
         }
@@ -98,6 +97,7 @@
             opacity: 0.9;
         }
         button.btn-peligro { background-color: #dc3545; }
+        button.btn-exito { background-color: #198754; }
         select {
             padding: 10px;
             border-radius: 8px;
@@ -120,6 +120,18 @@
         th { background-color: #212529; color: white; }
         .valido { color: #198754; font-weight: bold; }
         .invalido { color: #dc3545; font-weight: bold; }
+
+        /* Mensaje final de recorrido */
+        #mensaje-resultado-final {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: none;
+        }
+        .bg-exito { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .bg-error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
     </style>
 </head>
 <body>
@@ -141,7 +153,7 @@
 
     <!-- SECCIÓN DE LA APLICACIÓN (LECTOR QR) -->
     <div id="app-section" class="hidden">
-        <p>Escáner QR en Tiempo Real</p>
+        <p>Escáner QR en Tiempo Real (Máx. 6 Puntos)</p>
         <h1>Lector QR Secuencial</h1>
         
         <div class="info-secuencia">
@@ -157,6 +169,9 @@
             <video id="video-feed" autoplay playsinline muted></video>
         </div>
 
+        <!-- MENSAJE DE ESTADO FINAL -->
+        <div id="mensaje-resultado-final"></div>
+
         <h2>Historial de Registros</h2>
         <table>
             <thead>
@@ -169,9 +184,12 @@
             <tbody id="tabla-historial"></tbody>
         </table>
 
-        <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
-            <button id="btn-reiniciar" class="btn-peligro">Reiniciar Todo</button>
-            <button onclick="cerrarSesion()" style="background-color: #6c757d;">Cerrar Sesión</button>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+            <button id="btn-finalizar" class="btn-exito">Finalizar Recorrido</button>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="btn-reiniciar" class="btn-peligro" style="flex: 1;">Reiniciar Todo</button>
+                <button onclick="cerrarSesion()" style="background-color: #6c757d; flex: 1;">Cerrar Sesión</button>
+            </div>
         </div>
     </div>
 
@@ -179,6 +197,7 @@
         // ================= CONFIGURACIÓN DE LOGIN =================
         const USUARIO_DEFECTO = "admin";
         const PASSWORD_DEFECTO = "1234";
+        const TOTAL_PUNTOS = 6; // Límite exacto de puntos del recorrido
 
         function validarLogin() {
             const userIngresado = document.getElementById("username").value;
@@ -195,15 +214,14 @@
         }
 
         function cerrarSesion() {
-            // Apagar la cámara si está activa al cerrar sesión
             if (flujoActual) {
                 flujoActual.getTracks().forEach(track => track.stop());
                 flujoActual = null;
                 btnIniciar.style.display = 'inline-block';
             }
-            // Limpiar campos y volver al login
             document.getElementById("username").value = "";
             document.getElementById("password").value = "";
+            document.getElementById("mensaje-resultado-final").style.display = "none";
             document.getElementById("app-section").classList.add("hidden");
             document.getElementById("login-section").classList.remove("hidden");
         }
@@ -212,6 +230,8 @@
         let siguienteEsperado = 1;
         let listaDispositivos = [];
         let flujoActual = null;
+        let huboErroresEnRecorrido = false; 
+        let recorridoFinalizado = false;
 
         const video = document.getElementById('video-feed');
         const btnIniciar = document.getElementById('btn-iniciar');
@@ -219,8 +239,9 @@
         const txtEsperado = document.getElementById('numero-esperado');
         const tablaHistorial = document.getElementById('tabla-historial');
         const btnReiniciar = document.getElementById('btn-reiniciar');
+        const btnFinalizar = document.getElementById('btn-finalizar');
+        const mensajeFinal = document.getElementById('mensaje-resultado-final');
 
-        // Verificar soporte nativo de QR
         if (!('BarcodeDetector' in window)) {
             alert('Tu navegador no soporta lectura nativa de QR. Asegúrate de usar Chrome, Edge o Safari actualizado y bajo una conexión HTTPS.');
         }
@@ -274,8 +295,8 @@
         }
 
         async function escanearFotograma() {
-            // Solo escanear si la sección de la app está visible
             if (document.getElementById('app-section').classList.contains('hidden')) return;
+            if (recorridoFinalizado) return; // Detener escaneo si ya finalizó
 
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 try {
@@ -294,6 +315,8 @@
         let tiempoUltimoEscaneo = 0;
 
         function procesarQR(textoQR) {
+            if (recorridoFinalizado) return;
+
             const ahoraTiempo = Date.now();
             if (textoQR === ultimoCodigoLeido && (ahoraTiempo - tiempoUltimoEscaneo) < 2000) return;
 
@@ -305,14 +328,23 @@
             let resultadoTexto = "";
             let claseResultado = "";
 
-            if (textoQR.trim() === String(siguienteEsperado)) {
+            // Validar si el QR escaneado es exactamente el que se esperaba y no supera los 6 puntos
+            if (siguienteEsperado <= TOTAL_PUNTOS && textoQR.trim() === String(siguienteEsperado)) {
                 resultadoTexto = "Válido";
                 claseResultado = "valido";
-                siguienteEsperado++;
-                txtEsperado.innerText = siguienteEsperado;
+                
+                // Si es el último punto (6), completó la ronda con éxito
+                if (siguienteEsperado === TOTAL_PUNTOS) {
+                    recorridoFinalizado = true;
+                    mostrarResultadoFinal(true);
+                } else {
+                    siguienteEsperado++;
+                    txtEsperado.innerText = siguienteEsperado;
+                }
             } else {
                 resultadoTexto = "Incorrecto";
                 claseResultado = "invalido";
+                huboErroresEnRecorrido = true; 
             }
 
             const nuevaFila = document.createElement('tr');
@@ -324,14 +356,38 @@
             tablaHistorial.insertBefore(nuevaFila, tablaHistorial.firstChild);
         }
 
+        function mostrarResultadoFinal(esExitoso) {
+            mensajeFinal.style.display = "block";
+            if (esExitoso && !huboErroresEnRecorrido) {
+                mensajeFinal.className = "bg-exito";
+                mensajeFinal.innerHTML = "✅ Bien: ¡Los 6 puntos del recorrido se completaron de forma perfecta y ordenada!";
+            } else {
+                mensajeFinal.className = "bg-error";
+                mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o se saltaron puntos.";
+            }
+        }
+
+        // Botón manual por si desea cerrar antes de llegar al 6
+        btnFinalizar.addEventListener('click', () => {
+            recorridoFinalizado = true;
+            if (siguienteEsperado > TOTAL_PUNTOS && !huboErroresEnRecorrido) {
+                mostrarResultadoFinal(true);
+            } else {
+                mostrarResultadoFinal(false);
+            }
+        });
+
         btnIniciar.addEventListener('click', () => arrancarCamara(selectorCamara.value));
         selectorCamara.addEventListener('change', () => arrancarCamara(selectorCamara.value));
         
         btnReiniciar.addEventListener('click', () => {
             siguienteEsperado = 1;
+            huboErroresEnRecorrido = false;
+            recorridoFinalizado = false;
             txtEsperado.innerText = siguienteEsperado;
             tablaHistorial.innerHTML = '';
             ultimoCodigoLeido = null;
+            mensajeFinal.style.display = "none";
         });
     </script>
 </body>
