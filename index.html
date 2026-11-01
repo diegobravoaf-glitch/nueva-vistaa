@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lector QR Secuencial Móvil (6 Puntos)</title>
+    <title>Control de Recorrido QR (Oficial y Supervisores)</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -73,7 +73,7 @@
             margin: 10px 0;
             font-weight: bold;
         }
-        #numero-esperado {
+        #numero-esperado, #supervisor-esperado {
             color: #0d6efd;
             font-size: 1.8rem;
         }
@@ -121,8 +121,8 @@
         .valido { color: #198754; font-weight: bold; }
         .invalido { color: #dc3545; font-weight: bold; }
 
-        /* Mensaje final de recorrido */
-        #mensaje-resultado-final {
+        /* Mensajes de estado */
+        #mensaje-resultado-final, #supervisor-mensaje-final {
             margin-top: 20px;
             padding: 15px;
             border-radius: 8px;
@@ -132,6 +132,15 @@
         }
         .bg-exito { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
         .bg-error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        .badge-rol {
+            background-color: #6c757d;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -151,8 +160,9 @@
         <div id="error-message" class="error-msg"></div>
     </div>
 
-    <!-- SECCIÓN DE LA APLICACIÓN (LECTOR QR) -->
+    <!-- SECCIÓN DEL OFICIAL (OPERADOR) -->
     <div id="app-section" class="hidden">
+        <span class="badge-rol">Rol: Oficial de Recorrido</span>
         <p>Escáner QR en Tiempo Real (Máx. 6 Puntos)</p>
         <h1>Lector QR Secuencial</h1>
         
@@ -169,7 +179,6 @@
             <video id="video-feed" autoplay playsinline muted></video>
         </div>
 
-        <!-- MENSAJE DE ESTADO FINAL -->
         <div id="mensaje-resultado-final"></div>
 
         <h2>Historial de Registros</h2>
@@ -193,21 +202,59 @@
         </div>
     </div>
 
+    <!-- SECCIÓN DE LOS SUPERVISORES (SOLO LECTURA) -->
+    <div id="supervisor-section" class="hidden">
+        <span class="badge-rol" style="background-color: #198754;">Rol: Supervisor (Monitoreo en Vivo)</span>
+        <h2>Panel de Supervisión</h2>
+        
+        <div class="info-secuencia">
+            Siguiente esperado por oficial: <span id="supervisor-esperado">1</span>
+        </div>
+
+        <div id="supervisor-mensaje-final"></div>
+
+        <h2>Historial en Vivo del Recorrido</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>QR</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody id="supervisor-tabla-historial"></tbody>
+        </table>
+
+        <button onclick="cerrarSesion()" style="background-color: #6c757d; width: 100%; margin-top: 20px;">Cerrar Sesión</button>
+    </div>
+
     <script>
-        // ================= CONFIGURACIÓN DE LOGIN =================
-        const USUARIO_DEFECTO = "admin";
-        const PASSWORD_DEFECTO = "1234";
-        const TOTAL_PUNTOS = 6; // Límite exacto de puntos del recorrido
+        // ================= CONFIGURACIÓN DE USUARIOS =================
+        const USUARIOS = {
+            "admin": { pass: "1234", rol: "oficial" },
+            "supervisor1": { pass: "clave1", rol: "supervisor" },
+            "supervisor2": { pass: "clave2", rol: "supervisor" },
+            "supervisor3": { pass: "clave3", rol: "supervisor" }
+        };
+
+        const TOTAL_PUNTOS = 6;
 
         function validarLogin() {
-            const userIngresado = document.getElementById("username").value;
-            const passIngresado = document.getElementById("password").value;
+            const userIngresado = document.getElementById("username").value.trim();
+            const passIngresado = document.getElementById("password").value.trim();
             const errorDiv = document.getElementById("error-message");
 
-            if (userIngresado === USUARIO_DEFECTO && passIngresado === PASSWORD_DEFECTO) {
+            if (USUARIOS[userIngresado] && USUARIOS[userIngresado].pass === passIngresado) {
                 document.getElementById("login-section").classList.add("hidden");
-                document.getElementById("app-section").classList.remove("hidden");
                 errorDiv.textContent = "";
+
+                if (USUARIOS[userIngresado].rol === "oficial") {
+                    document.getElementById("app-section").classList.remove("hidden");
+                    cargarEstadoGuardado(); // Cargar si ya había datos
+                } else {
+                    document.getElementById("supervisor-section").classList.remove("hidden");
+                    sincronizarSupervisor(); // Iniciar monitoreo
+                }
             } else {
                 errorDiv.textContent = "Usuario o contraseña incorrectos.";
             }
@@ -222,11 +269,14 @@
             document.getElementById("username").value = "";
             document.getElementById("password").value = "";
             document.getElementById("mensaje-resultado-final").style.display = "none";
+            document.getElementById("supervisor-mensaje-final").style.display = "none";
+            
             document.getElementById("app-section").classList.add("hidden");
+            document.getElementById("supervisor-section").classList.add("hidden");
             document.getElementById("login-section").classList.remove("hidden");
         }
 
-        // ================= CÓDIGO DEL LECTOR QR =================
+        // ================= LÓGICA DEL OFICIAL =================
         let siguienteEsperado = 1;
         let listaDispositivos = [];
         let flujoActual = null;
@@ -296,7 +346,7 @@
 
         async function escanearFotograma() {
             if (document.getElementById('app-section').classList.contains('hidden')) return;
-            if (recorridoFinalizado) return; // Detener escaneo si ya finalizó
+            if (recorridoFinalizado) return;
 
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 try {
@@ -328,12 +378,10 @@
             let resultadoTexto = "";
             let claseResultado = "";
 
-            // Validar si el QR escaneado es exactamente el que se esperaba y no supera los 6 puntos
             if (siguienteEsperado <= TOTAL_PUNTOS && textoQR.trim() === String(siguienteEsperado)) {
                 resultadoTexto = "Válido";
                 claseResultado = "valido";
                 
-                // Si es el último punto (6), completó la ronda con éxito
                 if (siguienteEsperado === TOTAL_PUNTOS) {
                     recorridoFinalizado = true;
                     mostrarResultadoFinal(true);
@@ -347,13 +395,11 @@
                 huboErroresEnRecorrido = true; 
             }
 
-            const nuevaFila = document.createElement('tr');
-            nuevaFila.innerHTML = `
-                <td>${horaFormateada}</td>
-                <td>${textoQR}</td>
-                <td class="${claseResultado}">${resultadoTexto}</td>
-            `;
-            tablaHistorial.insertBefore(nuevaFila, tablaHistorial.firstChild);
+            const nuevaFila = { hora: horaFormateada, qr: textoQR, resultado: resultadoTexto, clase: claseResultado };
+            
+            // Guardar en localStorage para sincronizar con supervisores
+            guardarEstadoEnMemoria(siguienteEsperado, nuevaFila, recorridoFinalizado, huboErroresEnRecorrido);
+            actualizarInterfazOficial();
         }
 
         function mostrarResultadoFinal(esExitoso) {
@@ -365,9 +411,49 @@
                 mensajeFinal.className = "bg-error";
                 mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o se saltaron puntos.";
             }
+            guardarEstadoEnMemoria(siguienteEsperado, null, recorridoFinalizado, huboErroresEnRecorrido);
         }
 
-        // Botón manual por si desea cerrar antes de llegar al 6
+        function guardarEstadoEnMemoria(esperado, nuevaFila, finalizado, errores) {
+            let historial = JSON.parse(localStorage.getItem('qr_historial') || '[]');
+            if (nuevaFila) {
+                historial.unshift(nuevaFila);
+            }
+            const estado = {
+                esperado: esperado,
+                historial: historial,
+                finalizado: finalizado,
+                errores: errores
+            };
+            localStorage.setItem('qr_estado_recorrido', JSON.stringify(estado));
+        }
+
+        function actualizarInterfazOficial() {
+            const estado = JSON.parse(localStorage.getItem('qr_estado_recorrido'));
+            if (!estado) return;
+            txtEsperado.innerText = estado.esperado;
+            
+            tablaHistorial.innerHTML = '';
+            estado.historial.forEach(item => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `<td>${item.hora}</td><td>${item.qr}</td><td class="${item.clase}">${item.resultado}</td>`;
+                tablaHistorial.appendChild(fila);
+            });
+        }
+
+        function cargarEstadoGuardado() {
+            const estado = JSON.parse(localStorage.getItem('qr_estado_recorrido'));
+            if (estado) {
+                siguienteEsperado = estado.esperado;
+                recorridoFinalizado = estado.finalizado;
+                huboErroresEnRecorrido = estado.errores;
+                actualizarInterfazOficial();
+                if (recorridoFinalizado) {
+                    mostrarResultadoFinal(!huboErroresEnRecorrido);
+                }
+            }
+        }
+
         btnFinalizar.addEventListener('click', () => {
             recorridoFinalizado = true;
             if (siguienteEsperado > TOTAL_PUNTOS && !huboErroresEnRecorrido) {
@@ -388,7 +474,43 @@
             tablaHistorial.innerHTML = '';
             ultimoCodigoLeido = null;
             mensajeFinal.style.display = "none";
+            localStorage.removeItem('qr_estado_recorrido');
         });
+
+
+        // ================= LÓGICA DE LOS SUPERVISORES (MONITOREO) =================
+        function sincronizarSupervisor() {
+            setInterval(() => {
+                if (document.getElementById('supervisor-section').classList.contains('hidden')) return;
+
+                const estado = JSON.parse(localStorage.getItem('qr_estado_recorrido'));
+                if (!estado) return;
+
+                document.getElementById('supervisor-esperado').innerText = estado.esperado;
+
+                const supTabla = document.getElementById('supervisor-tabla-historial');
+                supTabla.innerHTML = '';
+                estado.historial.forEach(item => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `<td>${item.hora}</td><td>${item.qr}</td><td class="${item.clase}">${item.resultado}</td>`;
+                    supTabla.appendChild(fila);
+                });
+
+                const supMensajeFinal = document.getElementById('supervisor-mensaje-final');
+                if (estado.finalizado) {
+                    supMensajeFinal.style.display = "block";
+                    if (!estado.errores) {
+                        supMensajeFinal.className = "bg-exito";
+                        supMensajeFinal.innerHTML = "✅ Bien: ¡El oficial completó los 6 puntos de forma perfecta y ordenada!";
+                    } else {
+                        supMensajeFinal.className = "bg-error";
+                        supMensajeFinal.innerHTML = "❌ Negativo: El recorrido del oficial finalizó con errores o se saltaron puntos.";
+                    }
+                } else {
+                    supMensajeFinal.style.display = "none";
+                }
+            }, 1000); // Se actualiza cada 1 segundo automáticamente
+        }
     </script>
 </body>
 </html>
