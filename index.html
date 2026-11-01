@@ -250,10 +250,10 @@
 
                 if (USUARIOS[userIngresado].rol === "oficial") {
                     document.getElementById("app-section").classList.remove("hidden");
-                    cargarEstadoGuardado(); // Cargar si ya había datos
+                    cargarEstadoGuardado();
                 } else {
                     document.getElementById("supervisor-section").classList.remove("hidden");
-                    sincronizarSupervisor(); // Iniciar monitoreo
+                    sincronizarSupervisor();
                 }
             } else {
                 errorDiv.textContent = "Usuario o contraseña incorrectos.";
@@ -395,11 +395,39 @@
                 huboErroresEnRecorrido = true; 
             }
 
-            const nuevaFila = { hora: horaFormateada, qr: textoQR, resultado: resultadoTexto, clase: claseResultado };
+            const nuevaFilaDatos = { hora: horaFormateada, qr: textoQR, resultado: resultadoTexto, clase: claseResultado };
             
-            // Guardar en localStorage para sincronizar con supervisores
-            guardarEstadoEnMemoria(siguienteEsperado, nuevaFila, recorridoFinalizado, huboErroresEnRecorrido);
-            actualizarInterfazOficial();
+            // Guardar y actualizar tabla inmediatamente
+            guardarYActualizarHistorial(nuevaFilaDatos);
+        }
+
+        function guardarYActualizarHistorial(nuevaFilaDatos) {
+            let historial = JSON.parse(localStorage.getItem('qr_historial_lista') || '[]');
+            historial.unshift(nuevaFilaDatos); // Agregar al inicio de la lista
+
+            const estado = {
+                esperado: siguienteEsperado,
+                historial: historial,
+                finalizado: recorridoFinalizado,
+                errores: huboErroresEnRecorrido
+            };
+            localStorage.setItem('qr_estado_recorrido', JSON.stringify(estado));
+            localStorage.setItem('qr_historial_lista', JSON.stringify(historial));
+
+            renderizarTablaOficial(historial);
+        }
+
+        function renderizarTablaOficial(historial) {
+            tablaHistorial.innerHTML = '';
+            historial.forEach(item => {
+                const nuevaFila = document.createElement('tr');
+                nuevaFila.innerHTML = `
+                    <td>${item.hora}</td>
+                    <td>${item.qr}</td>
+                    <td class="${item.clase}">${item.resultado}</td>
+                `;
+                tablaHistorial.appendChild(nuevaFila);
+            });
         }
 
         function mostrarResultadoFinal(esExitoso) {
@@ -411,34 +439,16 @@
                 mensajeFinal.className = "bg-error";
                 mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o se saltaron puntos.";
             }
-            guardarEstadoEnMemoria(siguienteEsperado, null, recorridoFinalizado, huboErroresEnRecorrido);
-        }
-
-        function guardarEstadoEnMemoria(esperado, nuevaFila, finalizado, errores) {
-            let historial = JSON.parse(localStorage.getItem('qr_historial') || '[]');
-            if (nuevaFila) {
-                historial.unshift(nuevaFila);
-            }
+            
+            // Actualizar estado final en localStorage
+            const historial = JSON.parse(localStorage.getItem('qr_historial_lista') || '[]');
             const estado = {
-                esperado: esperado,
+                esperado: siguienteEsperado,
                 historial: historial,
-                finalizado: finalizado,
-                errores: errores
+                finalizado: recorridoFinalizado,
+                errores: huboErroresEnRecorrido
             };
             localStorage.setItem('qr_estado_recorrido', JSON.stringify(estado));
-        }
-
-        function actualizarInterfazOficial() {
-            const estado = JSON.parse(localStorage.getItem('qr_estado_recorrido'));
-            if (!estado) return;
-            txtEsperado.innerText = estado.esperado;
-            
-            tablaHistorial.innerHTML = '';
-            estado.historial.forEach(item => {
-                const fila = document.createElement('tr');
-                fila.innerHTML = `<td>${item.hora}</td><td>${item.qr}</td><td class="${item.clase}">${item.resultado}</td>`;
-                tablaHistorial.appendChild(fila);
-            });
         }
 
         function cargarEstadoGuardado() {
@@ -447,7 +457,11 @@
                 siguienteEsperado = estado.esperado;
                 recorridoFinalizado = estado.finalizado;
                 huboErroresEnRecorrido = estado.errores;
-                actualizarInterfazOficial();
+                txtEsperado.innerText = siguienteEsperado;
+                
+                if (estado.historial) {
+                    renderizarTablaOficial(estado.historial);
+                }
                 if (recorridoFinalizado) {
                     mostrarResultadoFinal(!huboErroresEnRecorrido);
                 }
@@ -475,6 +489,7 @@
             ultimoCodigoLeido = null;
             mensajeFinal.style.display = "none";
             localStorage.removeItem('qr_estado_recorrido');
+            localStorage.removeItem('qr_historial_lista');
         });
 
 
@@ -490,11 +505,13 @@
 
                 const supTabla = document.getElementById('supervisor-tabla-historial');
                 supTabla.innerHTML = '';
-                estado.historial.forEach(item => {
-                    const fila = document.createElement('tr');
-                    fila.innerHTML = `<td>${item.hora}</td><td>${item.qr}</td><td class="${item.clase}">${item.resultado}</td>`;
-                    supTabla.appendChild(fila);
-                });
+                if (estado.historial) {
+                    estado.historial.forEach(item => {
+                        const fila = document.createElement('tr');
+                        fila.innerHTML = `<td>${item.hora}</td><td>${item.qr}</td><td class="${item.clase}">${item.resultado}</td>`;
+                        supTabla.appendChild(fila);
+                    });
+                }
 
                 const supMensajeFinal = document.getElementById('supervisor-mensaje-final');
                 if (estado.finalizado) {
@@ -509,7 +526,7 @@
                 } else {
                     supMensajeFinal.style.display = "none";
                 }
-            }, 1000); // Se actualiza cada 1 segundo automáticamente
+            }, 1000); 
         }
     </script>
 </body>
