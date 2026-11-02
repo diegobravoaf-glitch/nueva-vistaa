@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Recorrido QR (Oficial y Supervisores)</title>
+    <title>Control de Recorrido QR en Tiempo Real (Nube)</title>
+    <!-- SDK de Firebase (Base de datos en tiempo real) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -229,6 +233,20 @@
     </div>
 
     <script>
+        // ================= CONFIGURACIÓN DE FIREBASE =================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2tdcGs6vLSkWNq8bJyG7RuI-21uK3ZwI",
+            authDomain: "aplicacionqr-435ca.firebaseapp.com",
+            databaseURL: "https://aplicacionqr-435ca-default-rtdb.firebaseio.com",
+            projectId: "aplicacionqr-435ca",
+            storageBucket: "aplicacionqr-435ca.firebasestorage.app",
+            messagingSenderId: "1095230767119",
+            appId: "1:1095230767119:web:8632dc1aafebef104e37a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         // ================= CONFIGURACIÓN DE USUARIOS =================
         const USUARIOS = {
             "admin": { pass: "1234", rol: "oficial" },
@@ -250,10 +268,10 @@
 
                 if (USUARIOS[userIngresado].rol === "oficial") {
                     document.getElementById("app-section").classList.remove("hidden");
-                    cargarEstadoGuardado();
+                    cargarEstadoNubeOficial();
                 } else {
                     document.getElementById("supervisor-section").classList.remove("hidden");
-                    sincronizarSupervisor();
+                    iniciarMonitoreoSupervisor();
                 }
             } else {
                 errorDiv.textContent = "Usuario o contraseña incorrectos.";
@@ -397,24 +415,25 @@
 
             const nuevaFilaDatos = { hora: horaFormateada, qr: textoQR, resultado: resultadoTexto, clase: claseResultado };
             
-            // Guardar y actualizar tabla inmediatamente
-            guardarYActualizarHistorial(nuevaFilaDatos);
+            // Subir a Firebase en tiempo real
+            sincronizarANube(nuevaFilaDatos);
         }
 
-        function guardarYActualizarHistorial(nuevaFilaDatos) {
-            let historial = JSON.parse(localStorage.getItem('qr_historial_lista') || '[]');
-            historial.unshift(nuevaFilaDatos); // Agregar al inicio de la lista
+        function sincronizarANube(nuevaFila) {
+            db.ref('recorrido/historial').once('value').then((snapshot) => {
+                let historial = snapshot.val() || [];
+                historial.unshift(nuevaFila);
 
-            const estado = {
-                esperado: siguienteEsperado,
-                historial: historial,
-                finalizado: recorridoFinalizado,
-                errores: huboErroresEnRecorrido
-            };
-            localStorage.setItem('qr_estado_recorrido', JSON.stringify(estado));
-            localStorage.setItem('qr_historial_lista', JSON.stringify(historial));
+                const estado = {
+                    esperado: siguienteEsperado,
+                    historial: historial,
+                    finalizado: recorridoFinalizado,
+                    errores: huboErroresEnRecorrido
+                };
 
-            renderizarTablaOficial(historial);
+                db.ref('recorrido').set(estado);
+                renderizarTablaOficial(historial);
+            });
         }
 
         function renderizarTablaOficial(historial) {
@@ -439,48 +458,49 @@
                 mensajeFinal.className = "bg-error";
                 mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o se saltaron puntos.";
             }
-            
-            // Actualizar estado final en localStorage
-            const historial = JSON.parse(localStorage.getItem('qr_historial_lista') || '[]');
-            const estado = {
-                esperado: siguienteEsperado,
-                historial: historial,
+
+            db.ref('recorrido').update({
                 finalizado: recorridoFinalizado,
                 errores: huboErroresEnRecorrido
-            };
-            localStorage.setItem('qr_estado_recorrido', JSON.stringify(estado));
+            });
         }
 
-        function cargarEstadoGuardado() {
-            const estado = JSON.parse(localStorage.getItem('qr_estado_recorrido'));
-            if (estado) {
-                siguienteEsperado = estado.esperado;
-                recorridoFinalizado = estado.finalizado;
-                huboErroresEnRecorrido = estado.errores;
-                txtEsperado.innerText = siguienteEsperado;
-                
-                if (estado.historial) {
-                    renderizarTablaOficial(estado.historial);
+        function cargarEstadoNubeOficial() {
+            db.ref('recorrido').on('value', (snapshot) => {
+                const estado = snapshot.val();
+                if (estado) {
+                    siguienteEsperado = estado.esperado || 1;
+                    recorridoFinalizado = estado.finalizado || false;
+                    huboErroresEnRecorrido = estado.errores || false;
+                    txtEsperado.innerText = siguienteEsperado;
+
+                    if (estado.historial) {
+                        renderizarTablaOficial(estado.historial);
+                    }
+                    if (recorridoFinalizado) {
+                        mensajeFinal.style.display = "block";
+                        if (!huboErroresEnRecorrido) {
+                            mensajeFinal.className = "bg-exito";
+                            mensajeFinal.innerHTML = "✅ Bien: ¡Los 6 puntos del recorrido se completaron de forma perfecta y ordenada!";
+                        } else {
+                            mensajeFinal.className = "bg-error";
+                            mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o se saltaron puntos.";
+                        }
+                    }
                 }
-                if (recorridoFinalizado) {
-                    mostrarResultadoFinal(!huboErroresEnRecorrido);
-                }
-            }
+            });
         }
 
         btnFinalizar.addEventListener('click', () => {
             recorridoFinalizado = true;
-            if (siguienteEsperado > TOTAL_PUNTOS && !huboErroresEnRecorrido) {
-                mostrarResultadoFinal(true);
-            } else {
-                mostrarResultadoFinal(false);
-            }
+            mostrarResultadoFinal(siguienteEsperado > TOTAL_PUNTOS && !huboErroresEnRecorrido);
         });
 
         btnIniciar.addEventListener('click', () => arrancarCamara(selectorCamara.value));
         selectorCamara.addEventListener('change', () => arrancarCamara(selectorCamara.value));
         
         btnReiniciar.addEventListener('click', () => {
+            db.ref('recorrido').remove(); // Borra los datos de la nube para reiniciar
             siguienteEsperado = 1;
             huboErroresEnRecorrido = false;
             recorridoFinalizado = false;
@@ -488,20 +508,23 @@
             tablaHistorial.innerHTML = '';
             ultimoCodigoLeido = null;
             mensajeFinal.style.display = "none";
-            localStorage.removeItem('qr_estado_recorrido');
-            localStorage.removeItem('qr_historial_lista');
         });
 
 
-        // ================= LÓGICA DE LOS SUPERVISORES (MONITOREO) =================
-        function sincronizarSupervisor() {
-            setInterval(() => {
+        // ================= LÓGICA DE LOS SUPERVISORES (MONITOREO EN LA NUBE) =================
+        function iniciarMonitoreoSupervisor() {
+            db.ref('recorrido').on('value', (snapshot) => {
                 if (document.getElementById('supervisor-section').classList.contains('hidden')) return;
 
-                const estado = JSON.parse(localStorage.getItem('qr_estado_recorrido'));
-                if (!estado) return;
+                const estado = snapshot.val();
+                if (!estado) {
+                    document.getElementById('supervisor-esperado').innerText = "1";
+                    document.getElementById('supervisor-tabla-historial').innerHTML = "";
+                    document.getElementById('supervisor-mensaje-final').style.display = "none";
+                    return;
+                }
 
-                document.getElementById('supervisor-esperado').innerText = estado.esperado;
+                document.getElementById('supervisor-esperado').innerText = estado.esperado || 1;
 
                 const supTabla = document.getElementById('supervisor-tabla-historial');
                 supTabla.innerHTML = '';
@@ -526,7 +549,7 @@
                 } else {
                     supMensajeFinal.style.display = "none";
                 }
-            }, 1000); 
+            });
         }
     </script>
 </body>
