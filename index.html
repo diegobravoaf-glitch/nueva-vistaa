@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Recorrido QR en Tiempo Real (Nube)</title>
-    <!-- SDK de Firebase (Base de datos en tiempo real) -->
+    <title>Control de Recorrido QR en Tiempo Real</title>
+    <!-- SDK de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -26,19 +26,9 @@
             border-radius: 12px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        .form-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #666;
-        }
+        h2, h3 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 5px; color: #666; }
         input {
             width: 100%;
             padding: 10px;
@@ -46,15 +36,8 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        .error-msg {
-            color: red;
-            font-size: 14px;
-            text-align: center;
-            margin-top: 10px;
-        }
-        .hidden {
-            display: none !important;
-        }
+        .error-msg { color: red; font-size: 14px; margin-top: 10px; }
+        .hidden { display: none !important; }
 
         #camara-contenedor {
             width: 100%;
@@ -65,22 +48,11 @@
             border-radius: 12px;
             overflow: hidden;
             background: #000;
-            position: relative;
         }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .info-secuencia {
-            font-size: 1.3rem;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        #numero-esperado, #supervisor-esperado {
-            color: #0d6efd;
-            font-size: 1.8rem;
-        }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .info-secuencia { font-size: 1.3rem; margin: 10px 0; font-weight: bold; }
+        #numero-esperado, #supervisor-esperado { color: #0d6efd; font-size: 1.8rem; }
+        
         .controles {
             margin: 15px 0;
             display: flex;
@@ -97,40 +69,29 @@
             cursor: pointer;
             font-weight: bold;
         }
-        button:hover {
-            opacity: 0.9;
-        }
+        button:hover { opacity: 0.9; }
         button.btn-peligro { background-color: #dc3545; }
         button.btn-exito { background-color: #198754; }
-        select {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-        }
+        
         table {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 10px;
             border-collapse: collapse;
             background: #fff;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid #dee2e6;
-            text-align: center;
-        }
+        th, td { padding: 10px; border-bottom: 1px solid #dee2e6; text-align: center; }
         th { background-color: #212529; color: white; }
         .valido { color: #198754; font-weight: bold; }
         .invalido { color: #dc3545; font-weight: bold; }
 
-        /* Mensajes de estado */
         #mensaje-resultado-final, #supervisor-mensaje-final {
             margin-top: 20px;
             padding: 15px;
             border-radius: 8px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             display: none;
         }
@@ -145,6 +106,45 @@
             display: inline-block;
             margin-bottom: 10px;
         }
+
+        /* --- ESTILOS DEL HISTORIAL DESPLEGABLE (ACORDEÓN) --- */
+        .acordeon-item {
+            background: #ffffff;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .acordeon-header {
+            width: 100%;
+            padding: 12px 15px;
+            background: #e9ecef;
+            color: #212529;
+            font-weight: bold;
+            border: none;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0;
+        }
+        .acordeon-header:hover { background: #dee2e6; opacity: 1; }
+        .acordeon-contenido {
+            display: none;
+            padding: 15px;
+            background: #fff;
+        }
+        .acordeon-contenido.activo { display: block; }
+        .tag-resultado {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            color: white;
+        }
+        .tag-exito { background-color: #198754; }
+        .tag-error { background-color: #dc3545; }
     </style>
 </head>
 <body>
@@ -167,7 +167,6 @@
     <!-- SECCIÓN DEL OFICIAL (OPERADOR) -->
     <div id="app-section" class="hidden">
         <span class="badge-rol">Rol: Oficial de Recorrido</span>
-        <p>Escáner QR en Tiempo Real (Máx. 6 Puntos)</p>
         <h1>Lector QR Secuencial</h1>
         
         <div class="info-secuencia">
@@ -176,7 +175,7 @@
 
         <div class="controles">
             <button id="btn-iniciar">Encender Cámara</button>
-            <select id="selector-camara" style="display:none;"></select>
+            <select id="selector-camara" style="display:none; padding:10px; border-radius:8px;"></select>
         </div>
 
         <div id="camara-contenedor">
@@ -185,7 +184,7 @@
 
         <div id="mensaje-resultado-final"></div>
 
-        <h2>Historial de Registros</h2>
+        <h3>Escaneos del Recorrido Actual</h3>
         <table>
             <thead>
                 <tr>
@@ -198,26 +197,26 @@
         </table>
 
         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
-            <button id="btn-finalizar" class="btn-exito">Finalizar Recorrido</button>
+            <button id="btn-finalizar" class="btn-exito">Finalizar y Guardar Recorrido</button>
             <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="btn-reiniciar" class="btn-peligro" style="flex: 1;">Reiniciar Todo</button>
+                <button id="btn-reiniciar" class="btn-peligro" style="flex: 1;">Reiniciar Actual</button>
                 <button onclick="cerrarSesion()" style="background-color: #6c757d; flex: 1;">Cerrar Sesión</button>
             </div>
         </div>
     </div>
 
-    <!-- SECCIÓN DE LOS SUPERVISORES (SOLO LECTURA) -->
+    <!-- SECCIÓN DE LOS SUPERVISORES (MONITOREO Y HISTORIAL ACUMULADO) -->
     <div id="supervisor-section" class="hidden">
         <span class="badge-rol" style="background-color: #198754;">Rol: Supervisor (Monitoreo en Vivo)</span>
         <h2>Panel de Supervisión</h2>
         
         <div class="info-secuencia">
-            Siguiente esperado por oficial: <span id="supervisor-esperado">1</span>
+            Recorrido en curso - Siguiente QR: <span id="supervisor-esperado">1</span>
         </div>
 
         <div id="supervisor-mensaje-final"></div>
 
-        <h2>Historial en Vivo del Recorrido</h2>
+        <h3>Recorrido Activo en Vivo</h3>
         <table>
             <thead>
                 <tr>
@@ -229,7 +228,14 @@
             <tbody id="supervisor-tabla-historial"></tbody>
         </table>
 
-        <button onclick="cerrarSesion()" style="background-color: #6c757d; width: 100%; margin-top: 20px;">Cerrar Sesión</button>
+        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #dee2e6;">
+
+        <h2>Historial de Recorridos Guardados</h2>
+        <div id="contenedor-acordeon-supervisores">
+            <p style="color: #666;">Cargando historial de recorridos...</p>
+        </div>
+
+        <button onclick="cerrarSesion()" style="background-color: #6c757d; width: 100%; margin-top: 25px;">Cerrar Sesión</button>
     </div>
 
     <script>
@@ -241,7 +247,7 @@
             projectId: "aplicacionqr-435ca",
             storageBucket: "aplicacionqr-435ca.firebasestorage.app",
             messagingSenderId: "1095230767119",
-            appId: "1:1095230767119:web:8632dc1aafebef104e37a"
+            appId: "1:1095230767119:web:8632dc1aafebbef104e37a"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -272,6 +278,7 @@
                 } else {
                     document.getElementById("supervisor-section").classList.remove("hidden");
                     iniciarMonitoreoSupervisor();
+                    cargarHistorialArchivadoSupervisor();
                 }
             } else {
                 errorDiv.textContent = "Usuario o contraseña incorrectos.";
@@ -310,17 +317,12 @@
         const btnFinalizar = document.getElementById('btn-finalizar');
         const mensajeFinal = document.getElementById('mensaje-resultado-final');
 
-        if (!('BarcodeDetector' in window)) {
-            alert('Tu navegador no soporta lectura nativa de QR. Asegúrate de usar Chrome, Edge o Safari actualizado y bajo una conexión HTTPS.');
-        }
-
         const detectorCodigos = new BarcodeDetector({ formats: ['qr_code'] });
 
         async function obtenerCamaras() {
             try {
                 const dispositivos = await navigator.mediaDevices.enumerateDevices();
                 listaDispositivos = dispositivos.filter(d => d.kind === 'videoinput');
-                
                 selectorCamara.innerHTML = '';
                 listaDispositivos.forEach((dispositivo, index) => {
                     const opcion = document.createElement('option');
@@ -331,50 +333,29 @@
                     }
                     selectorCamara.appendChild(opcion);
                 });
-
-                if (listaDispositivos.length > 1) {
-                    selectorCamara.style.display = 'inline-block';
-                }
-            } catch (e) {
-                console.error("Error enumerando cámaras:", e);
-            }
+                if (listaDispositivos.length > 1) selectorCamara.style.display = 'inline-block';
+            } catch (e) { console.error(e); }
         }
 
         async function arrancarCamara(deviceId = null) {
-            if (flujoActual) {
-                flujoActual.getTracks().forEach(track => track.stop());
-            }
-
-            const opcionesControles = deviceId 
-                ? { video: { deviceId: { exact: deviceId } } }
-                : { video: { facingMode: 'environment' } };
-
+            if (flujoActual) flujoActual.getTracks().forEach(track => track.stop());
+            const opcionesControles = deviceId ? { video: { deviceId: { exact: deviceId } } } : { video: { facingMode: 'environment' } };
             try {
                 flujoActual = await navigator.mediaDevices.getUserMedia(opcionesControles);
                 video.srcObject = flujoActual;
                 btnIniciar.style.display = 'none';
-                
                 await obtenerCamaras();
                 escanearFotograma();
-            } catch (err) {
-                alert("Error al acceder a la cámara. Recuerda que DEBES usar HTTPS:// para que el teléfono te permita activar la cámara.");
-                console.error(err);
-            }
+            } catch (err) { alert("Error al acceder a la cámara."); }
         }
 
         async function escanearFotograma() {
-            if (document.getElementById('app-section').classList.contains('hidden')) return;
-            if (recorridoFinalizado) return;
-
+            if (document.getElementById('app-section').classList.contains('hidden') || recorridoFinalizado) return;
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 try {
                     const codigos = await detectorCodigos.detect(video);
-                    if (codigos.length > 0) {
-                        procesarQR(codigos[0].rawValue);
-                    }
-                } catch (e) {
-                    console.error("Error detectando código:", e);
-                }
+                    if (codigos.length > 0) procesarQR(codigos[0].rawValue);
+                } catch (e) {}
             }
             requestAnimationFrame(escanearFotograma);
         }
@@ -384,25 +365,22 @@
 
         function procesarQR(textoQR) {
             if (recorridoFinalizado) return;
-
             const ahoraTiempo = Date.now();
             if (textoQR === ultimoCodigoLeido && (ahoraTiempo - tiempoUltimoEscaneo) < 2000) return;
 
             ultimoCodigoLeido = textoQR;
             tiempoUltimoEscaneo = ahoraTiempo;
 
-            const ahora = new Date();
-            const horaFormateada = ahora.toLocaleTimeString();
+            const horaFormateada = new Date().toLocaleTimeString();
             let resultadoTexto = "";
             let claseResultado = "";
 
             if (siguienteEsperado <= TOTAL_PUNTOS && textoQR.trim() === String(siguienteEsperado)) {
                 resultadoTexto = "Válido";
                 claseResultado = "valido";
-                
                 if (siguienteEsperado === TOTAL_PUNTOS) {
                     recorridoFinalizado = true;
-                    mostrarResultadoFinal(true);
+                    completarYArchivarRecorrido(true);
                 } else {
                     siguienteEsperado++;
                     txtEsperado.innerText = siguienteEsperado;
@@ -414,13 +392,11 @@
             }
 
             const nuevaFilaDatos = { hora: horaFormateada, qr: textoQR, resultado: resultadoTexto, clase: claseResultado };
-            
-            // Subir a Firebase en tiempo real
             sincronizarANube(nuevaFilaDatos);
         }
 
         function sincronizarANube(nuevaFila) {
-            db.ref('recorrido/historial').once('value').then((snapshot) => {
+            db.ref('recorrido_activo/historial').once('value').then((snapshot) => {
                 let historial = snapshot.val() || [];
                 historial.unshift(nuevaFila);
 
@@ -431,7 +407,7 @@
                     errores: huboErroresEnRecorrido
                 };
 
-                db.ref('recorrido').set(estado);
+                db.ref('recorrido_activo').set(estado);
                 renderizarTablaOficial(historial);
             });
         }
@@ -440,67 +416,63 @@
             tablaHistorial.innerHTML = '';
             historial.forEach(item => {
                 const nuevaFila = document.createElement('tr');
-                nuevaFila.innerHTML = `
-                    <td>${item.hora}</td>
-                    <td>${item.qr}</td>
-                    <td class="${item.clase}">${item.resultado}</td>
-                `;
+                nuevaFila.innerHTML = `<td>${item.hora}</td><td>${item.qr}</td><td class="${item.clase}">${item.resultado}</td>`;
                 tablaHistorial.appendChild(nuevaFila);
             });
         }
 
-        function mostrarResultadoFinal(esExitoso) {
+        function completarYArchivarRecorrido(esExitoso) {
             mensajeFinal.style.display = "block";
-            if (esExitoso && !huboErroresEnRecorrido) {
+            const fechaHora = new Date().toLocaleString();
+            const estadoExito = esExitoso && !huboErroresEnRecorrido;
+
+            if (estadoExito) {
                 mensajeFinal.className = "bg-exito";
-                mensajeFinal.innerHTML = "✅ Bien: ¡Los 6 puntos del recorrido se completaron de forma perfecta y ordenada!";
+                mensajeFinal.innerHTML = "✅ Bien: ¡Los 6 puntos del recorrido se completaron de forma perfecta!";
             } else {
                 mensajeFinal.className = "bg-error";
-                mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o se saltaron puntos.";
+                mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o saltos de puntos.";
             }
 
-            db.ref('recorrido').update({
-                finalizado: recorridoFinalizado,
-                errores: huboErroresEnRecorrido
+            // Archivar este recorrido completo en el histórico de Firebase
+            db.ref('recorrido_activo').once('value').then(snapshot => {
+                const datosActivos = snapshot.val();
+                if (datosActivos && datosActivos.historial) {
+                    db.ref('recorridos_archivados').push({
+                        fecha: fechaHora,
+                        exitoso: estadoExito,
+                        historial: datosActivos.historial
+                    });
+                }
             });
+
+            db.ref('recorrido_activo').update({ finalizado: true, errores: huboErroresEnRecorrido });
         }
 
         function cargarEstadoNubeOficial() {
-            db.ref('recorrido').on('value', (snapshot) => {
+            db.ref('recorrido_activo').on('value', (snapshot) => {
                 const estado = snapshot.val();
                 if (estado) {
                     siguienteEsperado = estado.esperado || 1;
                     recorridoFinalizado = estado.finalizado || false;
                     huboErroresEnRecorrido = estado.errores || false;
                     txtEsperado.innerText = siguienteEsperado;
-
-                    if (estado.historial) {
-                        renderizarTablaOficial(estado.historial);
-                    }
-                    if (recorridoFinalizado) {
-                        mensajeFinal.style.display = "block";
-                        if (!huboErroresEnRecorrido) {
-                            mensajeFinal.className = "bg-exito";
-                            mensajeFinal.innerHTML = "✅ Bien: ¡Los 6 puntos del recorrido se completaron de forma perfecta y ordenada!";
-                        } else {
-                            mensajeFinal.className = "bg-error";
-                            mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o se saltaron puntos.";
-                        }
-                    }
+                    if (estado.historial) renderizarTablaOficial(estado.historial);
                 }
             });
         }
 
         btnFinalizar.addEventListener('click', () => {
+            if (recorridoFinalizado) return;
             recorridoFinalizado = true;
-            mostrarResultadoFinal(siguienteEsperado > TOTAL_PUNTOS && !huboErroresEnRecorrido);
+            completarYArchivarRecorrido(siguienteEsperado > TOTAL_PUNTOS && !huboErroresEnRecorrido);
         });
 
         btnIniciar.addEventListener('click', () => arrancarCamara(selectorCamara.value));
         selectorCamara.addEventListener('change', () => arrancarCamara(selectorCamara.value));
         
         btnReiniciar.addEventListener('click', () => {
-            db.ref('recorrido').remove(); // Borra los datos de la nube para reiniciar
+            db.ref('recorrido_activo').remove();
             siguienteEsperado = 1;
             huboErroresEnRecorrido = false;
             recorridoFinalizado = false;
@@ -511,11 +483,10 @@
         });
 
 
-        // ================= LÓGICA DE LOS SUPERVISORES (MONITOREO EN LA NUBE) =================
+        // ================= LÓGICA DE SUPERVISORES (MONITOREO + ACORDEÓN) =================
         function iniciarMonitoreoSupervisor() {
-            db.ref('recorrido').on('value', (snapshot) => {
+            db.ref('recorrido_activo').on('value', (snapshot) => {
                 if (document.getElementById('supervisor-section').classList.contains('hidden')) return;
-
                 const estado = snapshot.val();
                 if (!estado) {
                     document.getElementById('supervisor-esperado').innerText = "1";
@@ -525,7 +496,6 @@
                 }
 
                 document.getElementById('supervisor-esperado').innerText = estado.esperado || 1;
-
                 const supTabla = document.getElementById('supervisor-tabla-historial');
                 supTabla.innerHTML = '';
                 if (estado.historial) {
@@ -539,17 +509,74 @@
                 const supMensajeFinal = document.getElementById('supervisor-mensaje-final');
                 if (estado.finalizado) {
                     supMensajeFinal.style.display = "block";
-                    if (!estado.errores) {
-                        supMensajeFinal.className = "bg-exito";
-                        supMensajeFinal.innerHTML = "✅ Bien: ¡El oficial completó los 6 puntos de forma perfecta y ordenada!";
-                    } else {
-                        supMensajeFinal.className = "bg-error";
-                        supMensajeFinal.innerHTML = "❌ Negativo: El recorrido del oficial finalizó con errores o se saltaron puntos.";
-                    }
+                    supMensajeFinal.className = estado.errores ? "bg-error" : "bg-exito";
+                    supMensajeFinal.innerHTML = estado.errores ? "❌ Negativo: El recorrido finalizó con errores." : "✅ Bien: ¡Recorrido completado perfectamente!";
                 } else {
                     supMensajeFinal.style.display = "none";
                 }
             });
+        }
+
+        // Cargar todos los recorridos guardados en forma de desplegables
+        function cargarHistorialArchivadoSupervisor() {
+            db.ref('recorridos_archivados').on('value', (snapshot) => {
+                const contenedor = document.getElementById('contenedor-acordeon-supervisores');
+                contenedor.innerHTML = '';
+
+                const data = snapshot.val();
+                if (!data) {
+                    contenedor.innerHTML = '<p style="color: #666;">No hay recorridos archivados todavía.</p>';
+                    return;
+                }
+
+                // Convertir objeto de Firebase a Array y revertir para ver los más recientes primero
+                const llaves = Object.keys(data).reverse();
+                let numeroRecorrido = llaves.length;
+
+                llaves.forEach((key) => {
+                    const item = data[key];
+                    const esExito = item.exitoso;
+                    const tagClass = esExito ? 'tag-exito' : 'tag-error';
+                    const tagTexto = esExito ? 'BIEN' : 'NEGATIVO';
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'acordeon-item';
+
+                    let filasHTML = '';
+                    if (item.historial) {
+                        item.historial.forEach(reg => {
+                            filasHTML += `<tr><td>${reg.hora}</td><td>${reg.qr}</td><td class="${reg.clase}">${reg.resultado}</td></tr>`;
+                        });
+                    }
+
+                    itemDiv.innerHTML = `
+                        <button class="acordeon-header" onclick="toggleAcordeon('${key}')">
+                            <span>Recorrido #${numeroRecorrido} <small style="font-weight:normal; font-size:0.85rem; color:#555;">(${item.fecha})</small></span>
+                            <span class="tag-resultado ${tagClass}">${tagTexto}</span>
+                        </button>
+                        <div id="contenido-${key}" class="acordeon-contenido">
+                            <table>
+                                <thead>
+                                    <tr><th>Hora</th><th>QR</th><th>Resultado</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${filasHTML}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    contenedor.appendChild(itemDiv);
+                    numeroRecorrido--;
+                });
+            });
+        }
+
+        function toggleAcordeon(id) {
+            const el = document.getElementById(`contenido-${id}`);
+            if (el) {
+                el.classList.toggle('activo');
+            }
         }
     </script>
 </body>
