@@ -129,6 +129,7 @@
             justify-content: space-between;
             align-items: center;
             border-radius: 0;
+            cursor: pointer;
         }
         .acordeon-header:hover { background: #dee2e6; opacity: 1; }
         .acordeon-contenido {
@@ -203,6 +204,13 @@
                 <button onclick="cerrarSesion()" style="background-color: #6c757d; flex: 1;">Cerrar Sesión</button>
             </div>
         </div>
+
+        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #dee2e6;">
+
+        <h3>Historial de Mis Recorridos Guardados</h3>
+        <div id="contenedor-acordeon-oficial">
+            <p style="color: #666;">Cargando historial...</p>
+        </div>
     </div>
 
     <!-- SECCIÓN DE LOS SUPERVISORES (MONITOREO Y HISTORIAL ACUMULADO) -->
@@ -245,9 +253,9 @@
             authDomain: "aplicacionqr-435ca.firebaseapp.com",
             databaseURL: "https://aplicacionqr-435ca-default-rtdb.firebaseio.com",
             projectId: "aplicacionqr-435ca",
-            storageBucket: "aplicacionqr-435ca.firebasestorage.app",
+            storageBucket: "aplicacionqr-435ca.appspot.com",
             messagingSenderId: "1095230767119",
-            appId: "1:1095230767119:web:8632dc1aafebbef104e37a"
+            appId: "1:1095230767119:web:8632dc1aafebef104e37a"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -275,10 +283,11 @@
                 if (USUARIOS[userIngresado].rol === "oficial") {
                     document.getElementById("app-section").classList.remove("hidden");
                     cargarEstadoNubeOficial();
+                    cargarHistorialArchivado("contenedor-acordeon-oficial");
                 } else {
                     document.getElementById("supervisor-section").classList.remove("hidden");
                     iniciarMonitoreoSupervisor();
-                    cargarHistorialArchivadoSupervisor();
+                    cargarHistorialArchivado("contenedor-acordeon-supervisores");
                 }
             } else {
                 errorDiv.textContent = "Usuario o contraseña incorrectos.";
@@ -434,10 +443,10 @@
                 mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o saltos de puntos.";
             }
 
-            // Archivar este recorrido completo en el histórico de Firebase
+            // Archivar este recorrido completo en el histórico de Firebase solo si tiene registros
             db.ref('recorrido_activo').once('value').then(snapshot => {
                 const datosActivos = snapshot.val();
-                if (datosActivos && datosActivos.historial) {
+                if (datosActivos && datosActivos.historial && datosActivos.historial.length > 0) {
                     db.ref('recorridos_archivados').push({
                         fecha: fechaHora,
                         exitoso: estadoExito,
@@ -458,6 +467,12 @@
                     huboErroresEnRecorrido = estado.errores || false;
                     txtEsperado.innerText = siguienteEsperado;
                     if (estado.historial) renderizarTablaOficial(estado.historial);
+                    
+                    if (recorridoFinalizado) {
+                        mensajeFinal.style.display = "block";
+                        mensajeFinal.className = huboErroresEnRecorrido ? "bg-error" : "bg-exito";
+                        mensajeFinal.innerHTML = huboErroresEnRecorrido ? "❌ Negativo: El recorrido finalizó con errores o saltos." : "✅ Bien: ¡Recorrido completado perfectamente!";
+                    }
                 }
             });
         }
@@ -465,7 +480,8 @@
         btnFinalizar.addEventListener('click', () => {
             if (recorridoFinalizado) return;
             recorridoFinalizado = true;
-            completarYArchivarRecorrido(siguienteEsperado > TOTAL_PUNTOS && !huboErroresEnRecorrido);
+            const esPerfecto = (siguienteEsperado > TOTAL_PUNTOS && !huboErroresEnRecorrido);
+            completarYArchivarRecorrido(esPerfecto);
         });
 
         btnIniciar.addEventListener('click', () => arrancarCamara(selectorCamara.value));
@@ -483,7 +499,7 @@
         });
 
 
-        // ================= LÓGICA DE SUPERVISORES (MONITOREO + ACORDEÓN) =================
+        // ================= LÓGICA GENERAL DE HISTORIAL (OFICIAL Y SUPERVISORES) =================
         function iniciarMonitoreoSupervisor() {
             db.ref('recorrido_activo').on('value', (snapshot) => {
                 if (document.getElementById('supervisor-section').classList.contains('hidden')) return;
@@ -517,10 +533,10 @@
             });
         }
 
-        // Cargar todos los recorridos guardados en forma de desplegables
-        function cargarHistorialArchivadoSupervisor() {
+        function cargarHistorialArchivado(elementId) {
             db.ref('recorridos_archivados').on('value', (snapshot) => {
-                const contenedor = document.getElementById('contenedor-acordeon-supervisores');
+                const contenedor = document.getElementById(elementId);
+                if (!contenedor) return;
                 contenedor.innerHTML = '';
 
                 const data = snapshot.val();
@@ -529,7 +545,6 @@
                     return;
                 }
 
-                // Convertir objeto de Firebase a Array y revertir para ver los más recientes primero
                 const llaves = Object.keys(data).reverse();
                 let numeroRecorrido = llaves.length;
 
@@ -549,12 +564,15 @@
                         });
                     }
 
+                    // Creamos un ID único combinando el contenedor para evitar conflictos si ambos están visibles
+                    const acordeonId = `${elementId}-${key}`;
+
                     itemDiv.innerHTML = `
-                        <button class="acordeon-header" onclick="toggleAcordeon('${key}')">
+                        <button class="acordeon-header" onclick="toggleAcordeon('${acordeonId}')">
                             <span>Recorrido #${numeroRecorrido} <small style="font-weight:normal; font-size:0.85rem; color:#555;">(${item.fecha})</small></span>
                             <span class="tag-resultado ${tagClass}">${tagTexto}</span>
                         </button>
-                        <div id="contenido-${key}" class="acordeon-contenido">
+                        <div id="contenido-${acordeonId}" class="acordeon-contenido">
                             <table>
                                 <thead>
                                     <tr><th>Hora</th><th>QR</th><th>Resultado</th></tr>
