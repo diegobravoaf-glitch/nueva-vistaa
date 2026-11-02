@@ -51,7 +51,7 @@
         }
         video { width: 100%; height: 100%; object-fit: cover; }
         .info-secuencia { font-size: 1.3rem; margin: 10px 0; font-weight: bold; }
-        #numero-esperado, #supervisor-esperado { color: #0d6efd; font-size: 1.8rem; }
+        #numero-esperado, #supervisor-esperado, #superadmin-esperado { color: #0d6efd; font-size: 1.8rem; }
         
         .controles {
             margin: 15px 0;
@@ -87,7 +87,7 @@
         .valido { color: #198754; font-weight: bold; }
         .invalido { color: #dc3545; font-weight: bold; }
 
-        #mensaje-resultado-final, #supervisor-mensaje-final {
+        #mensaje-resultado-final, #supervisor-mensaje-final, #superadmin-mensaje-final {
             margin-top: 20px;
             padding: 15px;
             border-radius: 8px;
@@ -246,6 +246,45 @@
         <button onclick="cerrarSesion()" style="background-color: #6c757d; width: 100%; margin-top: 25px;">Cerrar Sesión</button>
     </div>
 
+    <!-- SECCIÓN DEL SUPER ADMIN (CONTROL TOTAL Y LIMPIEZA) -->
+    <div id="superadmin-section" class="hidden">
+        <span class="badge-rol" style="background-color: #d63384;">Rol: Super Administrador (Control Total)</span>
+        <h2>Panel de Super Admin</h2>
+        
+        <div class="info-secuencia">
+            Recorrido en curso - Siguiente QR: <span id="superadmin-esperado">1</span>
+        </div>
+
+        <div id="superadmin-mensaje-final"></div>
+
+        <h3>Monitoreo en Vivo</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>QR</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody id="superadmin-tabla-historial"></tbody>
+        </table>
+
+        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #dee2e6;">
+
+        <h2>Gestión e Historial de Recorridos</h2>
+        
+        <!-- BOTÓN MAESTRO PARA LIMPIAR TODO -->
+        <button onclick="limpiarTodoElHistorial()" class="btn-peligro" style="width: 100%; margin-bottom: 20px; padding: 15px; font-size: 1.1rem;">
+            🗑️ Limpiar y Borrar Todo el Historial
+        </button>
+
+        <div id="contenedor-acordeon-superadmin">
+            <p style="color: #666;">Cargando historial de recorridos...</p>
+        </div>
+
+        <button onclick="cerrarSesion()" style="background-color: #6c757d; width: 100%; margin-top: 25px;">Cerrar Sesión</button>
+    </div>
+
     <script>
         // ================= CONFIGURACIÓN DE FIREBASE =================
         const firebaseConfig = {
@@ -266,7 +305,8 @@
             "admin": { pass: "1234", rol: "oficial" },
             "supervisor1": { pass: "clave1", rol: "supervisor" },
             "supervisor2": { pass: "clave2", rol: "supervisor" },
-            "supervisor3": { pass: "clave3", rol: "supervisor" }
+            "supervisor3": { pass: "clave3", rol: "supervisor" },
+            "diego": { pass: "admin2026", rol: "superadmin" } // <--- TU CUENTA DE SUPER ADMIN
         };
 
         const TOTAL_PUNTOS = 6;
@@ -280,14 +320,19 @@
                 document.getElementById("login-section").classList.add("hidden");
                 errorDiv.textContent = "";
 
-                if (USUARIOS[userIngresado].rol === "oficial") {
+                const rol = USUARIOS[userIngresado].rol;
+                if (rol === "oficial") {
                     document.getElementById("app-section").classList.remove("hidden");
                     cargarEstadoNubeOficial();
                     cargarHistorialArchivado("contenedor-acordeon-oficial");
-                } else {
+                } else if (rol === "supervisor") {
                     document.getElementById("supervisor-section").classList.remove("hidden");
                     iniciarMonitoreoSupervisor();
                     cargarHistorialArchivado("contenedor-acordeon-supervisores");
+                } else if (rol === "superadmin") {
+                    document.getElementById("superadmin-section").classList.remove("hidden");
+                    iniciarMonitoreoSuperAdmin();
+                    cargarHistorialArchivado("contenedor-acordeon-superadmin");
                 }
             } else {
                 errorDiv.textContent = "Usuario o contraseña incorrectos.";
@@ -302,11 +347,11 @@
             }
             document.getElementById("username").value = "";
             document.getElementById("password").value = "";
-            document.getElementById("mensaje-resultado-final").style.display = "none";
-            document.getElementById("supervisor-mensaje-final").style.display = "none";
             
+            // Ocultar todas las secciones
             document.getElementById("app-section").classList.add("hidden");
             document.getElementById("supervisor-section").classList.add("hidden");
+            document.getElementById("superadmin-section").classList.add("hidden");
             document.getElementById("login-section").classList.remove("hidden");
         }
 
@@ -443,7 +488,6 @@
                 mensajeFinal.innerHTML = "❌ Negativo: El recorrido finalizó con errores o saltos de puntos.";
             }
 
-            // Archivar este recorrido completo en el histórico de Firebase solo si tiene registros
             db.ref('recorrido_activo').once('value').then(snapshot => {
                 const datosActivos = snapshot.val();
                 if (datosActivos && datosActivos.historial && datosActivos.historial.length > 0) {
@@ -499,7 +543,7 @@
         });
 
 
-        // ================= LÓGICA GENERAL DE HISTORIAL (OFICIAL Y SUPERVISORES) =================
+        // ================= LÓGICA DE SUPERVISORES =================
         function iniciarMonitoreoSupervisor() {
             db.ref('recorrido_activo').on('value', (snapshot) => {
                 if (document.getElementById('supervisor-section').classList.contains('hidden')) return;
@@ -533,6 +577,51 @@
             });
         }
 
+
+        // ================= LÓGICA DE SUPER ADMIN =================
+        function iniciarMonitoreoSuperAdmin() {
+            db.ref('recorrido_activo').on('value', (snapshot) => {
+                if (document.getElementById('superadmin-section').classList.contains('hidden')) return;
+                const estado = snapshot.val();
+                if (!estado) {
+                    document.getElementById('superadmin-esperado').innerText = "1";
+                    document.getElementById('superadmin-tabla-historial').innerHTML = "";
+                    document.getElementById('superadmin-mensaje-final').style.display = "none";
+                    return;
+                }
+
+                document.getElementById('superadmin-esperado').innerText = estado.esperado || 1;
+                const saTabla = document.getElementById('superadmin-tabla-historial');
+                saTabla.innerHTML = '';
+                if (estado.historial) {
+                    estado.historial.forEach(item => {
+                        const fila = document.createElement('tr');
+                        fila.innerHTML = `<td>${item.hora}</td><td>${item.qr}</td><td class="${item.clase}">${item.resultado}</td>`;
+                        saTabla.appendChild(fila);
+                    });
+                }
+
+                const saMensajeFinal = document.getElementById('superadmin-mensaje-final');
+                if (estado.finalizado) {
+                    saMensajeFinal.style.display = "block";
+                    saMensajeFinal.className = estado.errores ? "bg-error" : "bg-exito";
+                    saMensajeFinal.innerHTML = estado.errores ? "❌ Negativo: El recorrido finalizó con errores." : "✅ Bien: ¡Recorrido completado perfectamente!";
+                } else {
+                    saMensajeFinal.style.display = "none";
+                }
+            });
+        }
+
+        function limpiarTodoElHistorial() {
+            if (confirm("⚠️ ¿Estás seguro de que deseas borrar TODOS los recorridos guardados y reiniciar el sistema por completo? Esta acción no se puede deshacer.")) {
+                db.ref('recorridos_archivados').remove();
+                db.ref('recorrido_activo').remove();
+                alert("🧹 ¡Historial limpiado con éxito!");
+            }
+        }
+
+
+        // ================= FUNCIONES COMPARTIDAS (ACORDEÓN) =================
         function cargarHistorialArchivado(elementId) {
             db.ref('recorridos_archivados').on('value', (snapshot) => {
                 const contenedor = document.getElementById(elementId);
@@ -564,7 +653,6 @@
                         });
                     }
 
-                    // Creamos un ID único combinando el contenedor para evitar conflictos si ambos están visibles
                     const acordeonId = `${elementId}-${key}`;
 
                     itemDiv.innerHTML = `
