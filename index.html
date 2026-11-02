@@ -15,28 +15,32 @@
             margin: 0 auto;
             padding: 15px;
             text-align: center;
-            background-color: #f8f9fa;
-            color: #212529;
+            /* --- TEMA OSCURO Y TECNOLÓGICO (BLINDAJE HEXAGONAL) --- */
+            background-color: #12141a;
+            color: #e9ecef;
         }
         .container {
             max-width: 400px;
             margin: 50px auto;
-            background: #fff;
+            background: rgba(33, 37, 41, 0.95);
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,212,255,0.15);
+            border: 1px solid #2a2f35;
         }
-        h2, h3 { text-align: center; color: #333; }
+        h2, h3 { text-align: center; color: #fff; }
         .form-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; margin-bottom: 5px; color: #666; }
+        label { display: block; margin-bottom: 5px; color: #adb5bd; }
         input {
             width: 100%;
             padding: 10px;
             box-sizing: border-box;
-            border: 1px solid #ccc;
+            border: 1px solid #3f454d;
+            background-color: #2a2f35;
+            color: #fff;
             border-radius: 4px;
         }
-        .error-msg { color: red; font-size: 14px; margin-top: 10px; }
+        .error-msg { color: #ff6b6b; font-size: 14px; margin-top: 10px; }
         .hidden { display: none !important; }
 
         #camara-contenedor {
@@ -44,14 +48,15 @@
             max-width: 400px;
             aspect-ratio: 1 / 1;
             margin: 15px auto;
-            border: 3px solid #0d6efd;
+            border: 3px solid #00d4ff;
             border-radius: 12px;
             overflow: hidden;
             background: #000;
+            box-shadow: 0 0 10px rgba(0,212,255,0.3);
         }
         video { width: 100%; height: 100%; object-fit: cover; }
-        .info-secuencia { font-size: 1.3rem; margin: 10px 0; font-weight: bold; }
-        #numero-esperado, #supervisor-esperado, #superadmin-esperado { color: #0d6efd; font-size: 1.8rem; }
+        .info-secuencia { font-size: 1.3rem; margin: 10px 0; font-weight: bold; color: #fff; }
+        #numero-esperado, #supervisor-esperado, #superadmin-esperado { color: #00d4ff; font-size: 1.8rem; }
         
         .controles {
             margin: 15px 0;
@@ -77,15 +82,15 @@
             width: 100%;
             margin-top: 10px;
             border-collapse: collapse;
-            background: #fff;
+            background: #212529;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        th, td { padding: 10px; border-bottom: 1px solid #dee2e6; text-align: center; }
-        th { background-color: #212529; color: white; }
-        .valido { color: #198754; font-weight: bold; }
-        .invalido { color: #dc3545; font-weight: bold; }
+        th, td { padding: 10px; border-bottom: 1px solid #3f454d; text-align: center; color: #e9ecef; }
+        th { background-color: #1a1e23; color: white; }
+        .valido { color: #2ecc71; font-weight: bold; }
+        .invalido { color: #e74c3c; font-weight: bold; }
 
         #mensaje-resultado-final, #supervisor-mensaje-final, #superadmin-mensaje-final {
             margin-top: 20px;
@@ -95,10 +100,10 @@
             font-weight: bold;
             display: none;
         }
-        .bg-exito { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .bg-error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        .bg-exito { background-color: #1b4332; color: #d8f3dc; border: 1px solid #2d6a4f; }
+        .bg-error { background-color: #5c1d24; color: #f8d7da; border: 1px solid #842029; }
         .badge-rol {
-            background-color: #6c757d;
+            background-color: #495057;
             color: white;
             padding: 4px 10px;
             border-radius: 20px;
@@ -109,19 +114,19 @@
 
         /* --- ESTILOS DEL HISTORIAL DESPLEGABLE (ACORDEÓN) --- */
         .acordeon-item {
-            background: #ffffff;
-            border: 1px solid #ced4da;
+            background: #212529;
+            border: 1px solid #3f454d;
             border-radius: 8px;
             margin-bottom: 10px;
             overflow: hidden;
             text-align: left;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .acordeon-header {
             width: 100%;
             padding: 12px 15px;
-            background: #e9ecef;
-            color: #212529;
+            background: #2a2f35;
+            color: #fff;
             font-weight: bold;
             border: none;
             text-align: left;
@@ -131,11 +136,11 @@
             border-radius: 0;
             cursor: pointer;
         }
-        .acordeon-header:hover { background: #dee2e6; opacity: 1; }
+        .acordeon-header:hover { background: #343a40; opacity: 1; }
         .acordeon-contenido {
             display: none;
             padding: 15px;
-            background: #fff;
+            background: #1a1e23;
         }
         .acordeon-contenido.activo { display: block; }
         .tag-resultado {
@@ -176,7 +181,7 @@
 
         <div class="controles">
             <button id="btn-iniciar">Encender Cámara</button>
-            <select id="selector-camara" style="display:none; padding:10px; border-radius:8px;"></select>
+            <select id="selector-camara" style="display:none; padding:10px; border-radius:8px; background:#2a2f35; color:#fff; border:1px solid #3f454d;"></select>
         </div>
 
         <div id="camara-contenedor">
@@ -205,11 +210,11 @@
             </div>
         </div>
 
-        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #dee2e6;">
+        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #3f454d;">
 
         <h3>Historial de Mis Recorridos Guardados</h3>
         <div id="contenedor-acordeon-oficial">
-            <p style="color: #666;">Cargando historial...</p>
+            <p style="color: #adb5bd;">Cargando historial...</p>
         </div>
     </div>
 
@@ -236,11 +241,11 @@
             <tbody id="supervisor-tabla-historial"></tbody>
         </table>
 
-        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #dee2e6;">
+        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #3f454d;">
 
         <h2>Historial de Recorridos Guardados</h2>
         <div id="contenedor-acordeon-supervisores">
-            <p style="color: #666;">Cargando historial de recorridos...</p>
+            <p style="color: #adb5bd;">Cargando historial de recorridos...</p>
         </div>
 
         <button onclick="cerrarSesion()" style="background-color: #6c757d; width: 100%; margin-top: 25px;">Cerrar Sesión</button>
@@ -269,7 +274,7 @@
             <tbody id="superadmin-tabla-historial"></tbody>
         </table>
 
-        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #dee2e6;">
+        <hr style="margin: 30px 0; border: 0; border-top: 2px solid #3f454d;">
 
         <h2>Gestión e Historial de Recorridos</h2>
         
@@ -279,7 +284,7 @@
         </button>
 
         <div id="contenedor-acordeon-superadmin">
-            <p style="color: #666;">Cargando historial de recorridos...</p>
+            <p style="color: #adb5bd;">Cargando historial de recorridos...</p>
         </div>
 
         <button onclick="cerrarSesion()" style="background-color: #6c757d; width: 100%; margin-top: 25px;">Cerrar Sesión</button>
@@ -655,7 +660,7 @@
 
                 const data = snapshot.val();
                 if (!data) {
-                    contenedor.innerHTML = '<p style="color: #666;">No hay recorridos archivados todavía.</p>';
+                    contenedor.innerHTML = '<p style="color: #adb5bd;">No hay recorridos archivados todavía.</p>';
                     return;
                 }
 
@@ -682,7 +687,7 @@
 
                     itemDiv.innerHTML = `
                         <button class="acordeon-header" onclick="toggleAcordeon('${acordeonId}')">
-                            <span>Recorrido #${numeroRecorrido} <small style="font-weight:normal; font-size:0.85rem; color:#555;">(${item.fecha})</small></span>
+                            <span>Recorrido #${numeroRecorrido} <small style="font-weight:normal; font-size:0.85rem; color:#adb5bd;">(${item.fecha})</small></span>
                             <span class="tag-resultado ${tagClass}">${tagTexto}</span>
                         </button>
                         <div id="contenido-${acordeonId}" class="acordeon-contenido">
