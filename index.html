@@ -306,7 +306,7 @@
             "supervisor1": { pass: "clave1", rol: "supervisor" },
             "supervisor2": { pass: "clave2", rol: "supervisor" },
             "supervisor3": { pass: "clave3", rol: "supervisor" },
-            "diego": { pass: "admin2026", rol: "superadmin" } // <--- TU CUENTA DE SUPER ADMIN
+            "diego": { pass: "admin2026", rol: "superadmin" }
         };
 
         const TOTAL_PUNTOS = 6;
@@ -348,7 +348,6 @@
             document.getElementById("username").value = "";
             document.getElementById("password").value = "";
             
-            // Ocultar todas las secciones
             document.getElementById("app-section").classList.add("hidden");
             document.getElementById("supervisor-section").classList.add("hidden");
             document.getElementById("superadmin-section").classList.add("hidden");
@@ -432,9 +431,35 @@
             if (siguienteEsperado <= TOTAL_PUNTOS && textoQR.trim() === String(siguienteEsperado)) {
                 resultadoTexto = "Válido";
                 claseResultado = "valido";
+                
+                const nuevaFilaDatos = { hora: horaFormateada, qr: textoQR, resultado: resultadoTexto, clase: claseResultado };
+                
                 if (siguienteEsperado === TOTAL_PUNTOS) {
                     recorridoFinalizado = true;
-                    completarYArchivarRecorrido(true);
+                    db.ref('recorrido_activo/historial').once('value').then((snapshot) => {
+                        let historial = snapshot.val() || [];
+                        historial.unshift(nuevaFilaDatos);
+                        
+                        const estado = {
+                            esperado: siguienteEsperado,
+                            historial: historial,
+                            finalizado: true,
+                            errores: false
+                        };
+                        db.ref('recorrido_activo').set(estado);
+                        renderizarTablaOficial(historial);
+                        
+                        db.ref('recorridos_archivados').push({
+                            fecha: new Date().toLocaleString(),
+                            exitoso: true,
+                            historial: historial
+                        });
+                    });
+                    
+                    mensajeFinal.style.display = "block";
+                    mensajeFinal.className = "bg-exito";
+                    mensajeFinal.innerHTML = "✅ Bien: ¡Los 6 puntos del recorrido se completaron de forma perfecta!";
+                    return;
                 } else {
                     siguienteEsperado++;
                     txtEsperado.innerText = siguienteEsperado;
